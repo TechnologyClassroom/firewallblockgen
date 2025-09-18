@@ -1,16 +1,22 @@
 # FirewallBlockGen
 
-FirewallBlockGen is a collection of scripts to generate firewall rules to block
-collections of IPs, ASN ranges, or countries.
+FirewallBlockGen is a collection of CLI BASH scripts to generate firewall rules
+to block collections of IPs, ASN ranges, or countries.
 
 Some of these scripts are still a bit of a work-in-progress (WIP), but they
 work for me.
 
-When reviewing server logs, it is helpful to lookup ASNs as the additional
-context might help determine if the pattern you are seeing is abuse or one our
-your internal proceses. With this information, you can make informed decisions
-that might lead to blocking individual addresses, blocking ASNs, blocking
-countries, or writing abuse reports.
+When [reviewing server logs](https://github.com/TechnologyClassroom/LogReview),
+it is helpful to lookup ASNs as the additional context might help determine if
+the pattern you are seeing is abuse or one our your internal proceses. With
+this information, you can make informed decisions that might lead to blocking
+individual addresses, blocking ASNs, blocking countries, or writing abuse
+reports.
+
+These scripts pair well with the
+[LogReview](https://github.com/TechnologyClassroom/LogReview) project.
+
+These scripts can be found at https://github.com/TechnologyClassroom/firewallblockgen/
 
 ## ASN Information and individual firewall rules
 
