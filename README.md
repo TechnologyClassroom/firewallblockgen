@@ -14,7 +14,10 @@ individual addresses, blocking ASNs, blocking countries, or writing abuse
 reports.
 
 These scripts pair well with the
-[LogReview](https://github.com/TechnologyClassroom/LogReview) project.
+[LogReview](https://github.com/TechnologyClassroom/LogReview) project. For
+automated handling, I recommend using
+[reaction with ipset](https://reaction.ppom.me/actions/ipset.html) instead of
+fail2ban.
 
 These scripts can be found at https://github.com/TechnologyClassroom/firewallblockgen/
 
