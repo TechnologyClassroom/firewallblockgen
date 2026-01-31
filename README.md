@@ -55,9 +55,17 @@ might go down so I leave what I was doing in the shorewall txt file, work on
 the ufw files until done, and then get back to working on shorewall. Use with
 caution.
 
-## ASN and Country
+## ASN and Country blocking
 
+Blocking by ASN or by country (geofencing) casts a much wider net than the
+other scripts. `asn-to-ipset-script.sh` and `cc-to-ipset-script.sh` generate
+BASH scripts that block ASNs or countries respectively with `ipset`. These do
+depend on external web services. Always use caution when blocking this many
+addresses.
+
+`asn-to-ipset-script.sh` currently depends on
+[enjen.net/asn-blocklist](https://www.enjen.net/asn-blocklist/readme.php)
+for a list of CIDR for an ASN. `cc-to-ipset-script.sh` currently depends on
+[IPdeny](https://www.ipdeny.com/ipblocks/) for a list of CIDR for a country.
 `asn-to-ipset-script.sh` and `cc-to-ipset-script.sh` do not depend on
-iptoasn-webservice and are for creating bash scripts that block either ASNs or
-countries with `ipset`. These do depend on external web services. Use with
-caution.
+iptoasn-webservice.
