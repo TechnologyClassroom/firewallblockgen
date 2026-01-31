@@ -3,6 +3,11 @@
 FirewallBlockGen is a collection of CLI BASH scripts to generate firewall rules
 to block collections of IPs, ASN ranges, or countries.
 
+For a visual demo of how I use the FirewallBlockGen scripts in context with my
+other tools, watch my BSides CT 2025 presentation
+[How to fight DDoS attacks from the command line](https://www.youtube.com/watch?v=BREJ58Y2Ez0)
+for a more complete picture of the process that I use to thwart attacks.
+
 Some of these scripts are still a bit of a work-in-progress (WIP), but they
 work for me.
 
