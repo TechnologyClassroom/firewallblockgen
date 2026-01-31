@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# Convert list of IP addresses to CSV format with ASN lookup.
+# ip-to-asn-info.sh
+# Generate a CSV file with ASN lookup information from a list of IP addresses.
+# Version 20260131
 #
 # Copyright (C) 2025 Michael McMahon
 #
@@ -17,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# This script depends on several projects.
+# This script depends on several projects:
 # https://iptoasn.com/
 # https://github.com/jedisct1/iptoasn-webservice
 # curl
@@ -29,6 +31,27 @@
 # cat
 # date
 
+# How do I use this script?
+# 1. Run an instance of iptoasn-webservice either locally on your
+#    machine or one accessible through your network.
+# 2. Set the `apiip` and `apiport` values to point to
+#    iptoasn-webservice.
+# 3. Place a list of IP addresses into the `ip-to-asn-info.txt` file
+#    in the same directory as this script with one IP address on each line.
+# 4. Run this command to run this script from the command line of a
+#    system that meets the dependencies.
+#      bash ip-to-asn-info.sh
+# 5. Read the output and potentially take action based on those
+#    findings.
+# 
+# Saving the output is helpful especially if there are too many
+# entries to understand with simply reading. This can be done with
+# piping the output into tee with a descriptive filename.
+#   bash ip-to-asn-info.sh | tee ip-to-asn-info-$(date +%Y%m%d)-production-server-attack.txt
+# This command can print out the top ASNs found in the output by
+# removing the unique information.
+#   grep -oE ",AS[0-9]*,.*,..," ip-to-asn-info-$(date +%Y%m%d)-production-server-attack.txt | sed 's/^,//g;s/,$//g' | sort  | uniq -c | sort -n
+
 # TODO Improve script to work with safe bash and unvalidated entries.
 #set -euo pipefail
 #set -euxo pipefail  # DEBUG
@@ -36,9 +59,8 @@
 # Set these variables with the address and port that has iptoasn-webservice
 # exposed. Default local API IP address is 0.0.0.0 and default port is 53661.
 apiip=127.0.0.1
-#apiport=80
 apiport=53661
-
+#apiport=80
 
 # Where is the file with IP addresses?
 iplistfile="ip-to-asn-info.txt"
@@ -114,8 +136,8 @@ while read -r IPTOASN; do
 done < "$iplistfile"
 
 # Output should look something like this:
-#185.39.19.47,ASN not announced,20250614
-#199.168.150.161,AS62907 ZSCALER (US),20250614
+#185.39.19.47,ASN not announced,ZZ,20250614
+#199.168.150.161,AS62907,ZSCALER,US,20250614
 
 echo -e "\nThese -e switches can be used along with grep -v to exclude these"
 echo "addresses from output of additional log analysis if necessary:"
