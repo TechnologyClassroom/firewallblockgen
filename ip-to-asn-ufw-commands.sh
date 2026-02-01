@@ -1,8 +1,11 @@
 #!/bin/bash
 
-# Convert list of IP addresses to commands for UFW with ASN lookup.
+# ip-to-asn-ufw-commands.sh
+# Generate UFW commands to block IP addresses with ASN information in comments
+# from a list of IP addresses.
+# Version 20260201
 #
-# Copyright (C) 2024-2025 Michael McMahon
+# Copyright (C) 2024-2026 Michael McMahon
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,20 +20,36 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# TODO expand
-# This script depends on these two projects.
+# This script depends on these projects:
 # https://iptoasn.com/
 # https://github.com/jedisct1/iptoasn-webservice
+# ufw, date, bash, echo, cat, head, grep, awk, sed, curl, jq, tr, exit
+
+# How did I use this script? (I now recommend using ipset instead.)
+# 1. Run an instance of iptoasn-webservice either locally on your machine or
+#    one accessible through your network.
+# 2. Set the `apiip` and `apiport` values to point to iptoasn-webservice.
+# 3. Place a list of IP addresses into the `ip-to-asn-ufw-commands.txt` file in
+#    the same directory as this script with one IP address on each line.
+# 4. Run this command to run this script from the command line of a system that
+#    meets the dependencies.
+#      bash ip-to-asn-ufw-commands.sh
+# 5. Run the commands on a server with UFW firewall to block those addresses.
+#
+# If your server's networking slows down due to the increased number of rules
+# or you run into a maximum number of firewall rules, I recommend migrating to
+# using ipset.
 
 # Set these variables with the address and port that has iptoasn-webservice
 # exposed.
 apiip=127.0.0.1
-#apiport=80
 apiport=53661
+
+# What is today?
 today=$(date +%Y%m%d)
 
 # Where is the file with IP addresses?
-iplistfile="ip-to-asn-ufw.txt"
+iplistfile="ip-to-asn-ufw-commands.txt"
 
 # Tests for dependencies
 
@@ -55,8 +74,8 @@ while read IPTOASN; do
     | sed -e '/:/s/insert 1 deny/insert $ufwipv6 deny/g' `# Only for IPv6, replace line 1 with $ufwipv6.`
 
 # Output should look something like this:
-#insert 1 deny 185.39.19.47 comment "ASN not announced - 20250614"
-#insert 1 deny 199.168.150.161 comment "AS62907 ZSCALER (US) - 20250614"
+#ufw insert 1 deny 185.39.19.47 comment "ASN not announced - 20250614"
+#ufw insert 1 deny 199.168.150.161 comment "AS62907 ZSCALER (US) - 20250614"
 
 # Edit the lines with some more fields with descriptive information about
 # user-agent patterns and behavior to look something like this:
