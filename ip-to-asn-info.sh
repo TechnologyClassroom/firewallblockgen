@@ -2,9 +2,9 @@
 
 # ip-to-asn-info.sh
 # Generate a CSV file with ASN lookup information from a list of IP addresses.
-# Version 20260131
+# Version 20260201
 #
-# Copyright (C) 2025 Michael McMahon
+# Copyright (C) 2025-2026 Michael McMahon
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,14 +22,7 @@
 # This script depends on several projects:
 # https://iptoasn.com/
 # https://github.com/jedisct1/iptoasn-webservice
-# curl
-# jq
-# sed
-# echo
-# bash
-# tr
-# cat
-# date
+# curl, jq, sed, echo, bash, tr, cat, date
 
 # How do I use this script?
 # 1. Run an instance of iptoasn-webservice either locally on your
@@ -43,7 +36,7 @@
 #      bash ip-to-asn-info.sh
 # 5. Read the output and potentially take action based on those
 #    findings.
-# 
+#
 # Saving the output is helpful especially if there are too many
 # entries to understand with simply reading. This can be done with
 # piping the output into tee with a descriptive filename.
