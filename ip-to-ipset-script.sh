@@ -1,8 +1,10 @@
 #!/bin/bash
 
+# ip-to-ipset-script.sh
 # Convert list of IPs to script to block all through ipset and iptables.
+# Version 20260201
 #
-# Copyright (C) 2025 Michael McMahon
+# Copyright (C) 2025-2026 Michael McMahon
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,22 +20,31 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # This script depends on these projects:
-# ipset
-# iptables
-# bash
-# sed
-# echo
-# pwd
-# cd
-# mktemp
-# grep
-# sleep
-# date
+#   ipset, iptables, bash, sed, echo, pwd, cd, mktemp, grep, sleep, date
 
-today=$(date +%Y%m%d)
+# How do I use this script?
+# 1. !!!Place a list of ASNs into the `asn-to-ipset-script.txt` file in the same
+#    directory as this script with one ASN on each line.
+# 2. Run this command to run this script from the command line of a system that
+#    meets the dependencies.
+#      bash ip-to-ipset-script.sh
+# 3. If successful, you will have a new file. Copy the file to the server that
+#    you want to block those addresses on. Replace
+#    `root@production.server:/root/ipset/` with the username, address, and
+#    directory that you want to place the files in.
+#      scp *-$(date +%Y%m%d).sh root@production.server:/root/ipset/
+# 4. Login to the server.
+#      ssh root@production.server
+# 5. Change to the directory where you store the files.
+#      cd ipset
+# 6. Run the individual scripts like so.
+#      bash ddos-ipset-20260201.sh
 
 # Where is the file with the IP list?
 iplistfile="ip-to-ipset-script.txt"
+
+# What is today?
+today=$(date +%Y%m%d)
 
 # What should the names of the ipsets start with?
 name="ddos"
@@ -49,8 +60,11 @@ echo "Building $name list in $(pwd)"
 #echo "ipset -X $name-4" > "$name-ipset-$today.sh"
 #echo "ipset -X $name-6" >> "$name-ipset-$today.sh"
 # Create ipsets to block individual addresses.
-echo "ipset -N $name-4 hash:ip family inet hashsize 2097152 maxelem 3000000" >> "$name-ipset-$today.sh"
-echo "ipset -N $name-6 hash:ip family inet6 hashsize 2097152 maxelem 3000000" >> "$name-ipset-$today.sh"
+# The default around 60,000 entries is probably enough, but if you need more
+# use this syntax with maxelem:
+#   ipset -N $name-4 hash:ip family inet maxelem 300000
+echo "ipset -N $name-4 hash:ip family inet" >> "$name-ipset-$today.sh"
+echo "ipset -N $name-6 hash:ip family inet6" >> "$name-ipset-$today.sh"
 # Create ipsets to block a CIDR range.
 #echo "ipset -N $name-4 hash:net family inet" >> "$name-ipset-$today.sh"
 #echo "ipset -N $name-6 hash:net family inet6" >> "$name-ipset-$today.sh"
