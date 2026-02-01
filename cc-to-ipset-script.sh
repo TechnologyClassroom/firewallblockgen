@@ -1,8 +1,10 @@
 #!/bin/bash
 
-# Convert list of country codes to scripts to block with ipset.
+# cc-to-ipset-script.sh
+# Generate scripts to block countries using ipset from a list of country codes.
+# Version 20260201
 #
-# Copyright (C) 2025 Michael McMahon
+# Copyright (C) 2025-2026 Michael McMahon
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,28 +19,42 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# Accepted country codes seem to be two letter country codes as defined in ISO 2166-2.
-# https://en.wikipedia.org/wiki/ISO_3166-2
 
 # This script depends on these projects:
-# ipdeny.com
-# wget
-# ipset
-# iptables
-# bash
-# sed
-# echo
-# pwd
-# cd
-# mktemp
-# grep
-# sleep
-# date
+#   https://www.ipdeny.com/ipblocks/
+#   ipset, iptables, wget, bash, sed, echo, pwd, cd, mktemp, grep, sleep, date
 
-today=$(date +%Y%m%d)
+# How do I use this script?
+# 1. Place a list of country codes (CC) into the `cc-to-ipset-script.txt` file
+#    in the same directory as this script with one CC on each line. Accepted CC
+#    seem to be two letter CC as defined in ISO 2166-2. Read
+#    <https://en.wikipedia.org/wiki/ISO_3166-2> for more information.
+# 2. Run this command to run this script from the command line of a system that
+#    meets the dependencies.
+#      bash cc-to-ipset-script.sh
+# 3. If successful, you will have files in the `./ipset/` directory. Copy those
+#    to the server that you want to block those CCs on. Replace
+#    `root@production.server:/root/ipset/` with the username, address, and
+#    directory that you want to place the files in.
+#      scp ipset/*-$(date +%Y%m%d).sh root@production.server:/root/ipset/
+# 4. Login to the server.
+#      ssh root@production.server
+# 5. Change to the directory where you store the files.
+#      cd ipset
+# 6. Run the individual scripts like so.
+#      bash cn-ipset-20260201.sh
+#    If you are applying several from today, run all of them with this BASH
+#    loop command:
+#      for i in $(ls *$(date +%Y%m%d).sh); do echo $i; bash $i; done
+#    If you are applying all of the scripts from a directory, run all of them
+#    with this BASH loop command:
+#      for i in $(ls *.sh); do echo $i; bash $i; done
 
 # Where is the file with the country code list?
 asnlistfile="cc-to-ipset-script.txt"
+
+# What is today?
+today=$(date +%Y%m%d)
 
 echo -e "Building ipset scripts...\n"
 
@@ -76,7 +92,7 @@ while read CC; do
     >> "$CC-ipset-$today.sh"
   echo "ip6tables -I FORWARD 1 -m set --match-set $CC-6 src -j DROP" \
     >> "$CC-ipset-$today.sh"
-  # Copy it to the ipset directory.
+  # Copy the file to the ipset directory.
   mkdir -p "$OWD/ipset"
   cp "$CC-ipset-$today.sh" "$OWD/ipset"
   # Do not become the monster that you seek to extinguish.
