@@ -1,8 +1,10 @@
 #!/bin/bash
 
-# Convert list of ASN to scripts to block with ipset.
+# asn-to-ipset-script.sh
+# Generate scripts to block ASNs with ipset from a list of ASNs.
+# Version 20260201
 #
-# Copyright (C) 2025 Michael McMahon
+# Copyright (C) 2025-2026 Michael McMahon
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,24 +20,43 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # This script depends on these projects:
-# enjen.net
-# wget
-# ipset
-# iptables
-# bash
-# sed
-# echo
-# grep
-# sleep
-# pwd
-# cd
-# mktemp
-# date
+#   https://www.enjen.net/asn-blocklist/readme.php
+#   ipset, iptables, wget, bash, sed, echo, grep, sleep, pwd, cd, mktemp, pwd,
+#   cp, and date
 
-today=$(date +%Y%m%d)
+# How do I use this script?
+# 1. Place a list of ASNs into the `asn-to-ipset-script.txt` file in the same
+#    directory as this script with one ASN on each line.
+# 2. Run this command to run this script from the command line of a system that
+#    meets the dependencies.
+#      bash asn-to-ipset-script.sh
+# 3. If successful, you will have files in the `./ipset/` directory. Copy those
+#    to the server that you want to block those ASNs on. Replace
+#    `root@production.server:/root/ipset/` with the username, address, and
+#    directory that you want to place the files in.
+#      scp ipset/*-$(date +%Y%m%d).sh root@production.server:/root/ipset/
+# 4. Login to the server.
+#      ssh root@production.server
+# 5. Change to the directory where you store the files.
+#      cd ipset
+# 6. Run the individual scripts like so.
+#      bash 21859-ipset-20260201.sh
+#    If you are applying several from today, run all of them with this BASH
+#    loop command:
+#      for i in $(ls *$(date +%Y%m%d).sh); do echo $i; bash $i; done
+#    If you are applying all of the scripts from a directory, run all of them
+#    with this BASH loop command:
+#      for i in $(ls *.sh); do echo $i; bash $i; done
+
+# TODO Improve script to work with safe bash and unvalidated entries.
+#set -euo pipefail
+#set -euxo pipefail  # DEBUG
 
 # Where is the file with the ASN list?
 asnlistfile="asn-to-ipset-script.txt"
+
+# What is today?
+today=$(date +%Y%m%d)
 
 echo -e "Building ipset scripts...\n"
 
@@ -79,3 +100,5 @@ while read ASN; do
   # Do not become the monster that you seek to extinguish.
   sleep 4
 done < "$OWD/$asnlistfile"
+
+exit 0
