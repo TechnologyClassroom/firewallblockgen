@@ -11,6 +11,10 @@ for a more complete picture of the process that I use to thwart attacks.
 Some of these scripts are still a bit of a work-in-progress (WIP), but they
 work for me.
 
+Use caution when modifying firewall rules. Try not to block yourself, your
+organization, or your clients. Familiarize yourself with the process to undo a
+change in the event that you do lock yourself out.
+
 When [reviewing server logs](https://github.com/TechnologyClassroom/LogReview),
 it is helpful to lookup ASNs as the additional context might help determine if
 the pattern you are seeing is abuse or one our your internal proceses. With
@@ -29,8 +33,8 @@ The FirewallBlockGen scripts live in the
 
 ## ASN Information and individual firewall rules
 
-`ip-to-asn-info.sh`, `ip-to-asn-shorewall.sh`, `ip-to-asn-iptables.sh`, and
-`ip-to-asn-ufw-commands.sh` depend on
+`ip-to-asn-info.sh`, `ip-to-asn-shorewall-commands.sh`,
+`ip-to-asn-iptables-config.sh`, and `ip-to-asn-ufw-commands.sh` depend on
 [iptoasn-webservice](https://github.com/jedisct1/iptoasn-webservice/) which can
 be installed with `rust` and these commands:
 
@@ -49,12 +53,7 @@ have iptoasn-webservice running.
 
 `ip-to-asn-info.sh` has more debugging infrastructure so start with that one.
 
-These scripts can all be refactored into one, but I tend to use them
-simulataneously so I am not motivated to do so. For example, I might be
-reviewing logs on a server that uses shorewall and then a server that uses UFW
-might go down so I leave what I was doing in the shorewall txt file, work on
-the ufw files until done, and then get back to working on shorewall. Use with
-caution.
+Many of these scripts could be refactored into one.
 
 ## ASN and Country blocking
 
