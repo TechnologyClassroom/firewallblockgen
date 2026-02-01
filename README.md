@@ -24,7 +24,8 @@ automated handling, I recommend using
 [reaction with ipset](https://reaction.ppom.me/actions/ipset.html) instead of
 fail2ban.
 
-These scripts can be found at https://github.com/TechnologyClassroom/firewallblockgen/
+The FirewallBlockGen scripts live in the
+<https://github.com/TechnologyClassroom/firewallblockgen/> repository.
 
 ## ASN Information and individual firewall rules
 
