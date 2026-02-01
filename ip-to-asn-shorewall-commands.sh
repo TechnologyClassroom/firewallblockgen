@@ -1,8 +1,11 @@
 #!/bin/bash
 
-# Convert list of IP addresses to commands for shorewall with ASN lookup.
+# ip-to-asn-shorewall-commands.sh
+# Generate shorewall commands to temporarily block IP addresses with ASN
+# information in a comment from a list of IP addresses.
+# Version 20260201
 #
-# Copyright (C) 2024-2025 Michael McMahon
+# Copyright (C) 2024-2026 Michael McMahon
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,19 +20,37 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# This script depends on these two projects.
+# This script depends on these projects:
 # https://iptoasn.com/
 # https://github.com/jedisct1/iptoasn-webservice
+# shorewall, date, bash, echo, cat, grep, sed, curl, jq, tr, exit
+
+# How did I use this script? (I now recommend using ipset instead.)
+# 1. Run an instance of iptoasn-webservice either locally on your machine or
+#    one accessible through your network.
+# 2. Set the `apiip` and `apiport` values to point to iptoasn-webservice.
+# 3. Place a list of IP addresses into the `ip-to-asn-shorewall-commands.txt`
+#    file in the same directory as this script with one IP address on each line.
+# 4. Run this command to run this script from the command line of a system that
+#    meets the dependencies.
+#      bash ip-to-asn-shorewall-commands.sh
+# 5. Run the commands on a server with the Shorewall firewall to block those
+#    addresses temporarily until reboot.
+#
+# If your server's networking slows down due to the increased number of rules
+# or you run into a maximum number of firewall rules, I recommend migrating to
+# using ipset.
 
 # Set these variables with the address and port that has iptoasn-webservice
 # exposed.
 apiip=127.0.0.1
-#apiport=80
 apiport=53661
-today=$(date +%Y%m%d)
 
 # Where is the file with IP addresses?
-iplistfile="ip-to-asn-shorewall.txt"
+iplistfile="ip-to-asn-shorewall-commands.txt"
+
+# What is today?
+today=$(date +%Y%m%d)
 
 echo -e "Commands for shorewall that can be run on a server to block these addresses if necessary.\n"
 
@@ -45,8 +66,8 @@ while read IPTOASN; do
     | sed -e '/:/s/shorewall /shorewall6 /g' `# Only for IPv6, replace shorewall with shorewall6.`
 
 # Output should look something like this:
-#shorewall drop 185.39.19.47 # ASN not announced
-#shorewall drop 199.168.150.161 # AS62907 ZSCALER (US)
+#shorewall drop 185.39.19.47 # ASN not announced - 20260201
+#shorewall drop 199.168.150.161 # AS62907 ZSCALER (US) - 20260201
 
 # Edit the lines with some more fields with descriptive information about
 # user-agent patterns and behavior to look something like this:
