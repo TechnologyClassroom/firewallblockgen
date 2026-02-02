@@ -67,7 +67,7 @@ OWD="$(pwd)"
 # Change to a temporary directory.
 cd "$(mktemp -d)" || exit
 
-while read CC; do
+while read -r CC; do
   echo "Building $CC list in $(pwd)"
   # Download the CC list.
   wget -qO "$CC-$today.txt" "https://www.ipdeny.com/ipblocks/data/countries/$CC.zone"

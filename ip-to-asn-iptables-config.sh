@@ -60,7 +60,7 @@ echo -e "Rules for iptables that can be applied to a server to block these addre
 # Debug API with this command:
 #   curl -H'Accept: application/json' "192.168.50.102:80/v1/as/ip/8.8.8.8"
 
-while read IPTOASN; do
+while read -r IPTOASN; do
   curl -s -H'Accept: application/json' "$apiip:$apiport/v1/as/ip/$IPTOASN" \
     | jq '"# AS\(.as_number) \(.as_description) (\(.as_country_code))-A state-check -s \(.ip) -j DROP"' \
     | sed 's/^"//g;s/"$//g' `# Remove leading and trailing double quote.` \

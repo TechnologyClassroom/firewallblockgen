@@ -69,7 +69,7 @@ END
 # Debug API with this command:
 #   curl -H'Accept: application/json' "192.168.50.102:80/v1/as/ip/8.8.8.8"
 
-while read IPTOASN; do
+while read -r IPTOASN; do
   curl -s -H'Accept: application/json' "$apiip:$apiport/v1/as/ip/$IPTOASN" \
     | jq '"ufw insert 1 deny \(.ip) comment \"AS\(.as_number) \(.as_description) (\(.as_country_code))"' \
     | sed 's/\\//g' `# Remove extra backslash.` \

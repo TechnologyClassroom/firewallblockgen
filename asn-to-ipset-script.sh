@@ -66,7 +66,7 @@ OWD="$(pwd)"
 # Change to a temporary directory.
 cd "$(mktemp -d)" || exit
 
-while read ASN; do
+while read -r ASN; do
   echo "Building $ASN list in $(pwd)"
   # Download the ASN list.
   wget -qO "$ASN-$today.txt" "https://www.enjen.net/asn-blocklist/index.php?asn=$ASN&type=iplist&api=1"
