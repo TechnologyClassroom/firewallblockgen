@@ -57,35 +57,31 @@ echo -e "Building ipset script...\n"
 
 cp "$iplistfile" "$name-$today.txt"
 echo "Building $name list in $(pwd)"
-# Download the list.
-# Destroy ipsets.
-# Note: This does not work for existing ipsets in use. You would need to make
-# different ipsets and swap them in.
-#echo "ipset -X $name-4" > "$name-ipset-$today.sh"
-#echo "ipset -X $name-6" >> "$name-ipset-$today.sh"
-# Create ipsets to block individual addresses.
-# The default around 60,000 entries is probably enough, but if you need more
-# use this syntax with maxelem:
-#   ipset -N $name-4 hash:ip family inet maxelem 300000
-echo "ipset -N $name-4 hash:ip family inet" >> "$name-ipset-$today.sh"
-echo "ipset -N $name-6 hash:ip family inet6" >> "$name-ipset-$today.sh"
-# Create ipsets to block a CIDR range.
-#echo "ipset -N $name-4 hash:net family inet" >> "$name-ipset-$today.sh"
-#echo "ipset -N $name-6 hash:net family inet6" >> "$name-ipset-$today.sh"
-# Add IPs to ipset script.
-grep -v ":" "$name-$today.txt" \
-  | sed "s/^/ipset -A $name-4 /g" \
-  >> "$name-ipset-$today.sh"
-grep ":" "$name-$today.txt" \
-  | sed "s/^/ipset -A $name-6 /g" \
-  >> "$name-ipset-$today.sh"
-# Add the ipset to iptables
-echo "iptables -I INPUT 1 -m set --match-set $name-4 src -j DROP" \
-  >> "$name-ipset-$today.sh"
-echo "iptables -I FORWARD 1 -m set --match-set $name-4 src -j DROP" \
-  >> "$name-ipset-$today.sh"
-echo "ip6tables -I INPUT 1 -m set --match-set $name-6 src -j DROP" \
-  >> "$name-ipset-$today.sh"
-echo "ip6tables -I FORWARD 1 -m set --match-set $name-6 src -j DROP" \
-  >> "$name-ipset-$today.sh"
+{
+  # Download the list.
+  # Destroy ipsets.
+  # Note: This does not work for existing ipsets in use. You would need to make
+  # different ipsets and swap them in.
+  #echo "ipset -X $name-4" > "$name-ipset-$today.sh"
+  #echo "ipset -X $name-6" >> "$name-ipset-$today.sh"
+  # Create ipsets to block individual addresses.
+  # The default around 60,000 entries is probably enough, but if you need more
+  # use this syntax with maxelem:
+  #   ipset -N $name-4 hash:ip family inet maxelem 300000
+  echo "ipset -N $name-4 hash:ip family inet"
+  echo "ipset -N $name-6 hash:ip family inet6"
+  # Create ipsets to block a CIDR range.
+  #echo "ipset -N $name-4 hash:net family inet" >> "$name-ipset-$today.sh"
+  #echo "ipset -N $name-6 hash:net family inet6" >> "$name-ipset-$today.sh"
+  # Add IPs to ipset script.
+  grep -v ":" "$name-$today.txt" \
+    | sed "s/^/ipset -A $name-4 /g"
+  grep ":" "$name-$today.txt" \
+    | sed "s/^/ipset -A $name-6 /g"
+  # Add the ipset to iptables
+  echo "iptables -I INPUT 1 -m set --match-set $name-4 src -j DROP"
+  echo "iptables -I FORWARD 1 -m set --match-set $name-4 src -j DROP"
+  echo "ip6tables -I INPUT 1 -m set --match-set $name-6 src -j DROP"
+  echo "ip6tables -I FORWARD 1 -m set --match-set $name-6 src -j DROP"
+} >> "$name-ipset-$today.sh"
 rm "$name-$today.txt"

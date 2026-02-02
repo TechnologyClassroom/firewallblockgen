@@ -70,30 +70,26 @@ while read -r ASN; do
   echo "Building $ASN list in $(pwd)"
   # Download the ASN list.
   wget -qO "$ASN-$today.txt" "https://www.enjen.net/asn-blocklist/index.php?asn=$ASN&type=iplist&api=1"
-  # Destroy ipsets.
-  # Note: This does not work for existing ipsets in use. You would need to make
-  # different ipsets and swap them in.
-  # echo "ipset -X $ASN-4" > "$ASN-ipset-$today.sh"
-  # echo "ipset -X $ASN-6" >> "$ASN-ipset-$today.sh"
-  # Create ipsets to block a CIDR range.
-  echo "ipset -N $ASN-4 hash:net family inet" >> "$ASN-ipset-$today.sh"
-  echo "ipset -N $ASN-6 hash:net family inet6" >> "$ASN-ipset-$today.sh"
-  # Add CIDR to ipset.
-  grep -v ":" "$ASN-$today.txt" \
-    | sed "s/^/ipset -A $ASN-4 /g" \
-    >> "$ASN-ipset-$today.sh"
-  grep ":" "$ASN-$today.txt" \
-    | sed "s/^/ipset -A $ASN-6 /g" \
-    >> "$ASN-ipset-$today.sh"
-  # Add the ipset to iptables
-  echo "iptables -I INPUT 1 -m set --match-set $ASN-4 src -j DROP" \
-    >> "$ASN-ipset-$today.sh"
-  echo "iptables -I FORWARD 1 -m set --match-set $ASN-4 src -j DROP" \
-    >> "$ASN-ipset-$today.sh"
-  echo "ip6tables -I INPUT 1 -m set --match-set $ASN-6 src -j DROP" \
-    >> "$ASN-ipset-$today.sh"
-  echo "ip6tables -I FORWARD 1 -m set --match-set $ASN-6 src -j DROP" \
-    >> "$ASN-ipset-$today.sh"
+  {
+    # Destroy ipsets.
+    # Note: This does not work for existing ipsets in use. You would need to make
+    # different ipsets and swap them in.
+    # echo "ipset -X $ASN-4" > "$ASN-ipset-$today.sh"
+    # echo "ipset -X $ASN-6" >> "$ASN-ipset-$today.sh"
+    # Create ipsets to block a CIDR range.
+    echo "ipset -N $ASN-4 hash:net family inet"
+    echo "ipset -N $ASN-6 hash:net family inet6"
+    # Add CIDR to ipset.
+    grep -v ":" "$ASN-$today.txt" \
+      | sed "s/^/ipset -A $ASN-4 /g"
+    grep ":" "$ASN-$today.txt" \
+      | sed "s/^/ipset -A $ASN-6 /g"
+    # Add the ipset to iptables
+    echo "iptables -I INPUT 1 -m set --match-set $ASN-4 src -j DROP"
+    echo "iptables -I FORWARD 1 -m set --match-set $ASN-4 src -j DROP"
+    echo "ip6tables -I INPUT 1 -m set --match-set $ASN-6 src -j DROP"
+    echo "ip6tables -I FORWARD 1 -m set --match-set $ASN-6 src -j DROP"
+  } >> "$ASN-ipset-$today.sh"
   # Copy it to the ipset directory.
   mkdir -p "$OWD/ipset"
   cp "$ASN-ipset-$today.sh" "$OWD/ipset"
