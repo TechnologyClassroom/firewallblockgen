@@ -55,8 +55,7 @@ name="ddos"
 
 echo -e "Building ipset script...\n"
 
-cp "$iplistfile" "$name-$today.txt"
-echo "Building $name list in $(pwd)"
+echo "Building $name ipset script in $(pwd)/$name-ipset-$today.sh file..."
 {
   # Download the list.
   # Destroy ipsets.
@@ -74,9 +73,9 @@ echo "Building $name list in $(pwd)"
   #echo "ipset -N $name-4 hash:net family inet" >> "$name-ipset-$today.sh"
   #echo "ipset -N $name-6 hash:net family inet6" >> "$name-ipset-$today.sh"
   # Add IPs to ipset script.
-  grep -v ":" "$name-$today.txt" \
+  grep -v ":" "$iplistfile" \
     | sed "s/^/ipset -A $name-4 /g"
-  grep ":" "$name-$today.txt" \
+  grep ":" "$iplistfile" \
     | sed "s/^/ipset -A $name-6 /g"
   # Add the ipset to iptables
   echo "iptables -I INPUT 1 -m set --match-set $name-4 src -j DROP"
@@ -84,4 +83,3 @@ echo "Building $name list in $(pwd)"
   echo "ip6tables -I INPUT 1 -m set --match-set $name-6 src -j DROP"
   echo "ip6tables -I FORWARD 1 -m set --match-set $name-6 src -j DROP"
 } >> "$name-ipset-$today.sh"
-rm "$name-$today.txt"
