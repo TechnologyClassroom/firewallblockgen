@@ -90,11 +90,16 @@ while read -r ASN; do
     echo "ip6tables -I INPUT 1 -m set --match-set $ASN-6 src -j DROP"
     echo "ip6tables -I FORWARD 1 -m set --match-set $ASN-6 src -j DROP"
   } >> "$ASN-ipset-$today.sh"
-  # Copy it to the ipset directory.
+  # Create target directory if it does not exist.
   mkdir -p "$OWD/ipset"
+  # Copy ipset script to the ipset directory.
   cp "$ASN-ipset-$today.sh" "$OWD/ipset"
   # Do not become the monster that you seek to extinguish.
   sleep 4
 done < "$OWD/$asnlistfile"
+
+echo -e "\nIf builds were successful, ipset scripts can be found in the"
+echo -e "$OWD/ipset/ directory.\n"
+echo "Copy the scripts to the servers that need the block and run them."
 
 exit 0
