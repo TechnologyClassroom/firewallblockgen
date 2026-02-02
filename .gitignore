@@ -1,0 +1,16 @@
+# Default inputs
+asn-to-ipset-script.txt
+cc-to-ipset-script.txt
+ip-to-asn-info.txt
+ip-to-asn-iptables-config.txt
+ip-to-asn-shorewall-commands.txt
+ip-to-asn-ufw-commands.txt
+ip-to-ipset-script.txt
+# Generated with this: ls *.sh | sed 's/.sh$/.txt/g'
+
+# Default outputs
+ipset/
+ddos-ipset-*.sh
+
+# vim
+*.swp
