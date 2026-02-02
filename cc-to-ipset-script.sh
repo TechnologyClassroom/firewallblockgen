@@ -65,7 +65,7 @@ echo -e "Building ipset scripts...\n"
 OWD="$(pwd)"
 
 # Change to a temporary directory.
-cd "$(mktemp -d)"
+cd "$(mktemp -d)" || exit
 
 while read CC; do
   echo "Building $CC list in $(pwd)"

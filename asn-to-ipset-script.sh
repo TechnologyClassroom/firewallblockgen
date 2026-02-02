@@ -64,7 +64,7 @@ echo -e "Building ipset scripts...\n"
 OWD="$(pwd)"
 
 # Change to a temporary directory.
-cd "$(mktemp -d)"
+cd "$(mktemp -d)" || exit
 
 while read ASN; do
   echo "Building $ASN list in $(pwd)"
