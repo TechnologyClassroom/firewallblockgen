@@ -1,4 +1,5 @@
 #!/bin/bash
+#shellcheck disable=SC2016
 
 # ip-to-asn-ufw-commands.sh
 # Generate UFW commands to block IP addresses with ASN information in comments
@@ -76,6 +77,10 @@ while read IPTOASN; do
     | sed 's/^"//g' `# Remove leading double quote.` \
     | sed "s/\"$/ - $today\"/" `# Add date string.` \
     | sed -e '/:/s/insert 1 deny/insert $ufwipv6 deny/g' `# Only for IPv6, replace line 1 with $ufwipv6.`
+
+# The `sed -e` line above generates a false positive for shellcheck's SC2016 so
+# I disabled it on line 2. If this section gets rewritten, consider removing
+# the disabled test.
 
 # Output should look something like this:
 #ufw insert 1 deny 185.39.19.47 comment "ASN not announced - 20250614"
