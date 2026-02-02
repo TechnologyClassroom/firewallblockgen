@@ -80,8 +80,8 @@ while read -r IPTOASN; do
 done < "$iplistfile"
 
 echo -e "\nThese -e switches can be used along with grep -v to exclude these addresses from output of additional log analysis if necessary:"
-cat "$iplistfile" \
-  | sed 's/^/-e "/g;s/$/"/g' \
+< "$iplistfile" \
+  sed 's/^/-e "/g;s/$/"/g' \
   | tr '\n' ' '
 echo
 
