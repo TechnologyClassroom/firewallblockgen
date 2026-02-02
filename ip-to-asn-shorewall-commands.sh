@@ -41,6 +41,10 @@
 # or you run into a maximum number of firewall rules, I recommend migrating to
 # using ipset.
 
+# TODO Improve script to work with safe bash and unvalidated entries.
+#set -euo pipefail
+#set -euxo pipefail  # DEBUG
+
 # Set these variables with the address and port that has iptoasn-webservice
 # exposed.
 apiip=127.0.0.1

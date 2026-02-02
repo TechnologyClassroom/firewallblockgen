@@ -19,7 +19,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
 # This script depends on these projects:
 #   https://www.ipdeny.com/ipblocks/
 #   ipset, iptables, wget, bash, sed, echo, pwd, cd, mktemp, grep, sleep, date
@@ -49,6 +48,10 @@
 #    If you are applying all of the scripts from a directory, run all of them
 #    with this BASH loop command:
 #      for i in $(ls *.sh); do echo $i; bash $i; done
+
+# TODO Improve script to work with safe bash and unvalidated entries.
+#set -euo pipefail
+#set -euxo pipefail  # DEBUG
 
 # Where is the file with the country code list?
 asnlistfile="cc-to-ipset-script.txt"

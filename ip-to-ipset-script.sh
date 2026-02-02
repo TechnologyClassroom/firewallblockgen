@@ -23,8 +23,8 @@
 #   ipset, iptables, bash, sed, echo, pwd, cd, mktemp, grep, sleep, date
 
 # How do I use this script?
-# 1. !!!Place a list of ASNs into the `asn-to-ipset-script.txt` file in the same
-#    directory as this script with one ASN on each line.
+# 1. Place a list of IP addresses into the `ip-to-ipset-script.txt` file in
+#    the same directory as this script with one IP address on each line.
 # 2. Run this command to run this script from the command line of a system that
 #    meets the dependencies.
 #      bash ip-to-ipset-script.sh
@@ -39,6 +39,10 @@
 #      cd ipset
 # 6. Run the individual scripts like so.
 #      bash ddos-ipset-20260201.sh
+
+# TODO Improve script to work with safe bash and unvalidated entries.
+#set -euo pipefail
+#set -euxo pipefail  # DEBUG
 
 # Where is the file with the IP list?
 iplistfile="ip-to-ipset-script.txt"

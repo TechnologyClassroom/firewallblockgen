@@ -20,9 +20,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # This script depends on these projects:
-# https://iptoasn.com/
-# https://github.com/jedisct1/iptoasn-webservice
-# iptables, date, bash, echo, cat, grep, sed, curl, jq, tr, exit
+#   https://iptoasn.com/
+#   https://github.com/jedisct1/iptoasn-webservice
+#   iptables, date, bash, echo, cat, grep, sed, curl, jq, tr, exit
 
 # How did I use this script? (I now recommend using ipset instead.)
 # 1. Run an instance of iptoasn-webservice either locally on your machine or
@@ -39,6 +39,10 @@
 # If your server's networking slows down due to the increased number of rules
 # or you run into a maximum number of firewall rules, I recommend migrating to
 # using ipset.
+
+# TODO Improve script to work with safe bash and unvalidated entries.
+#set -euo pipefail
+#set -euxo pipefail  # DEBUG
 
 # Set these variables with the address and port that has iptoasn-webservice
 # exposed. Default local API IP address is 0.0.0.0 and default port is 53661.
