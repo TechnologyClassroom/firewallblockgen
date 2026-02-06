@@ -2,7 +2,7 @@
 
 # ip-to-asn-info.sh
 # Generate a CSV file with ASN lookup information from a list of IP addresses.
-# Version 20260201
+# Version 20260205
 #
 # Copyright (C) 2025-2026 Michael McMahon
 #
@@ -102,9 +102,9 @@ else
   fi
 fi
 
-echo "This is just data for informational purposes. This could help influence"
-echo "a decision for blocking an ASN or making firewall changes if necessary."
-echo
+echo "ip-to-asn-info.sh provides data for informational purposes. This could"
+echo "help influence a decision for blocking an ASN or making firewall changes"
+echo -e "if necessary.\n"
 
 # CSV column headers
 echo "IP,ASN,AS Description,Country,Date"

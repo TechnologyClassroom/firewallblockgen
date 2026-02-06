@@ -4,7 +4,7 @@
 # ip-to-asn-ufw-commands.sh
 # Generate UFW commands to block IP addresses with ASN information in comments
 # from a list of IP addresses.
-# Version 20260201
+# Version 20260205
 #
 # Copyright (C) 2024-2026 Michael McMahon
 #
@@ -58,7 +58,8 @@ iplistfile="ip-to-asn-ufw-commands.txt"
 
 # Tests for dependencies
 
-echo -e "Commands for UFW that can be run on a server to block these addresses if necessary.\n"
+echo "Commands for UFW that can be run on a server to block these addresses"
+echo -e "if necessary.\n"
 
 cat <<'END'
 Throughout this script, $ufwipv6 references this command:
@@ -92,7 +93,8 @@ while read -r IPTOASN; do
 
 done < "$iplistfile"
 
-echo -e "\nThese -e switches can be used along with grep -v to exclude these addresses from output of additional log analysis if necessary:"
+echo -e "\nThese -e switches can be used along with grep -v to exclude these"
+echo "addresses from output of additional log analysis if necessary:"
 < "$iplistfile" \
   sed 's/^/-e "/g;s/$/"/g' \
   | tr '\n' ' '
