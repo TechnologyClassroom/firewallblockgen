@@ -85,11 +85,16 @@ while read -r CC; do
       | sed "s/^/ipset -A $CC-4 /g"
     grep ":" "$CC-$today.txt" \
       | sed "s/^/ipset -A $CC-6 /g"
-    # Add the ipset to iptables
+    # Adds the ipset to iptables for all ports.
     echo "iptables -I INPUT 1 -m set --match-set $CC-4 src -j DROP"
     echo "iptables -I FORWARD 1 -m set --match-set $CC-4 src -j DROP"
     echo "ip6tables -I INPUT 1 -m set --match-set $CC-6 src -j DROP"
     echo "ip6tables -I FORWARD 1 -m set --match-set $CC-6 src -j DROP"
+    # Adds the ipset to iptables for only ports 80 and 443 for tcp connections.
+    # echo "iptables -I INPUT 1 -p tcp -m multiport --dports 80,443 -m set --match-set $CC-4 src -j DROP"
+    # echo "iptables -I FORWARD 1 -p tcp -m multiport --dports 80,443 -m set --match-set $CC-4 src -j DROP"
+    # echo "ip6tables -I INPUT -p tcp -m multiport --dports 80,443 1 -m set --match-set $CC-6 src -j DROP"
+    # echo "ip6tables -I FORWARD 1 -p tcp -m multiport --dports 80,443 -m set --match-set $CC-6 src -j DROP"
   } >> "$CC-ipset-$today.sh"
   # Copy the file to the ipset directory.
   mkdir -p "$OWD/ipset"
