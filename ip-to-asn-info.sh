@@ -2,7 +2,7 @@
 
 # ip-to-asn-info.sh
 # Generate CSV formatted data with ASN lookup information from a list of IP addresses.
-# Version 20260205
+# Version 20260603
 #
 # Copyright (C) 2025-2026 Michael McMahon
 #
@@ -132,10 +132,22 @@ done < "$iplistfile"
 #185.39.19.47,ASN not announced,ZZ,20250614
 #199.168.150.161,AS62907,ZSCALER,US,20250614
 
+# Build a set of matching strings for grep. These can be added to
+# logreview.sh to potentially exclude them from future searches.
 echo -e "\nThese -e switches can be used along with grep -v to exclude these"
-echo "addresses from output of additional log analysis if necessary:"
+echo "addresses from output of additional log analysis from logreview.sh"
+echo "if necessary:"
 sed 's/^/-e "/g;s/$/"/g' "$iplistfile" \
   | tr '\n' ' '
+echo
+
+# Build a command to manually ban with reaction.
+# Example: for i in 192.168.1.3 192.168.1.4 ; do echo "$i" ; reaction trigger apache.badbots ip="$i" ; done
+echo -e "\nThis one-liner can be modified to ban these addresses if necessary:"
+cat "$iplistfile" \
+  | tr '\n' ' ' \
+  | sed 's/^/for i in /g' \
+  | sed 's/$/ \; do echo "$i" \; reaction trigger apache.badbots ip="$i" \; done/g'
 echo
 
 exit 0
