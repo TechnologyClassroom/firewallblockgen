@@ -108,7 +108,8 @@ echo -e "if necessary.\n"
 
 # CSV column headers
 echo "IP,ASN,AS Description,Country,Date"
-while read -r IPTOASN; do
+# read also yields a final line with no trailing newline.
+while read -r IPTOASN || [ -n "$IPTOASN" ]; do
   # TODO Validate IP is a valid IPv4 or IPv6 address.
   validateip=$(echo "$IPTOASN" \
     | grep -Eo \

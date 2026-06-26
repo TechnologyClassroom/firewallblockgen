@@ -62,7 +62,13 @@ echo -e "addresses if necessary.\n"
 # Debug API with this command:
 #   curl -H'Accept: application/json' "192.168.50.102:80/v1/as/ip/8.8.8.8"
 
-while read -r IPTOASN; do
+if [ ! -f "$iplistfile" ]; then
+  echo "ERROR: $iplistfile not found! Create it with one IP per line." >&2
+  exit 1
+fi
+
+# read also yields a final line with no trailing newline.
+while read -r IPTOASN || [ -n "$IPTOASN" ]; do
   curl -s -H'Accept: application/json' "$apiip:$apiport/v1/as/ip/$IPTOASN" \
     | jq '"shorewall drop \(.ip) # AS\(.as_number) \(.as_description) (\(.as_country_code))"' \
     | sed 's/ASnull null (null)/ASN not announced/g' `# Identify unannounced ASNs.` \
