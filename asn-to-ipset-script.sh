@@ -48,8 +48,7 @@
 #    with this BASH loop command:
 #      for i in $(ls *.sh); do echo $i; bash $i; done
 
-# TODO Improve script to work with safe bash and unvalidated entries.
-#set -euo pipefail
+set -euo pipefail
 #set -euxo pipefail  # DEBUG
 
 # Where is the file with the ASN list?
@@ -63,32 +62,45 @@ echo -e "Building ipset scripts...\n"
 # Original working directory.
 OWD="$(pwd)"
 
-# Change to a temporary directory.
-cd "$(mktemp -d)" || exit
+# Change to a temporary directory (removed on exit).
+TMPDIR_BUILD="$(mktemp -d)"
+trap 'rm -rf "$TMPDIR_BUILD"' EXIT
+cd "$TMPDIR_BUILD" || exit 1
 
-while read -r ASN; do
+# read also yields a final line with no trailing newline.
+while read -r ASN || [ -n "$ASN" ]; do
+  # Validate the ASN; skip anything that is not all digits.
+  if ! [[ "$ASN" =~ ^[0-9]+$ ]]; then
+    echo "WARNING: skipping invalid ASN: '$ASN'" >&2
+    continue
+  fi
   echo "Building $ASN list in $(pwd)"
-  # Download the ASN list.
-  wget -qO "$ASN-$today.txt" "https://www.enjen.net/asn-blocklist/index.php?asn=$ASN&type=iplist&api=1"
+  # Download the ASN list; skip the ASN on a failed or empty download.
+  if ! wget -qO "$ASN-$today.txt" \
+      "https://www.enjen.net/asn-blocklist/index.php?asn=$ASN&type=iplist&api=1" \
+      || [ ! -s "$ASN-$today.txt" ]; then
+    echo "WARNING: download failed or empty for AS$ASN; skipping." >&2
+    continue
+  fi
+  # Keep only valid IP/CIDR lines so a stray HTML error page cannot become an
+  # ipset entry in the generated root script.
+  sane="$(grep -E '^[0-9A-Fa-f:.]+(/[0-9]{1,3})?$' "$ASN-$today.txt" || true)"
+  if [ -z "$sane" ]; then
+    echo "WARNING: no valid IP/CIDR lines for AS$ASN; skipping." >&2
+    continue
+  fi
   {
-    # Destroy ipsets.
-    # Note: This does not work for existing ipsets in use. You would need to make
-    # different ipsets and swap them in.
-    # echo "ipset -X $ASN-4" > "$ASN-ipset-$today.sh"
-    # echo "ipset -X $ASN-6" >> "$ASN-ipset-$today.sh"
-    # Create ipsets to block a CIDR range.
-    echo "ipset -N $ASN-4 hash:net family inet"
-    echo "ipset -N $ASN-6 hash:net family inet6"
-    # Add CIDR to ipset.
-    grep -v ":" "$ASN-$today.txt" \
-      | sed "s/^/ipset -A $ASN-4 /g"
-    grep ":" "$ASN-$today.txt" \
-      | sed "s/^/ipset -A $ASN-6 /g"
-    # Add the ipset to iptables
-    echo "iptables -I INPUT 1 -m set --match-set $ASN-4 src -j DROP"
-    echo "iptables -I FORWARD 1 -m set --match-set $ASN-4 src -j DROP"
-    echo "ip6tables -I INPUT 1 -m set --match-set $ASN-6 src -j DROP"
-    echo "ip6tables -I FORWARD 1 -m set --match-set $ASN-6 src -j DROP"
+    # Create ipsets (idempotent; large maxelem for big ASNs).
+    echo "ipset -exist create $ASN-4 hash:net family inet maxelem 200000"
+    echo "ipset -exist create $ASN-6 hash:net family inet6 maxelem 200000"
+    # Add CIDR/IP entries.
+    printf '%s\n' "$sane" | grep -v ":" | sed "s|^|ipset -exist add $ASN-4 |" || true
+    printf '%s\n' "$sane" | grep ":"    | sed "s|^|ipset -exist add $ASN-6 |" || true
+    # Insert iptables rules only if they are not already present.
+    echo "iptables -C INPUT -m set --match-set $ASN-4 src -j DROP 2>/dev/null || iptables -I INPUT 1 -m set --match-set $ASN-4 src -j DROP"
+    echo "iptables -C FORWARD -m set --match-set $ASN-4 src -j DROP 2>/dev/null || iptables -I FORWARD 1 -m set --match-set $ASN-4 src -j DROP"
+    echo "ip6tables -C INPUT -m set --match-set $ASN-6 src -j DROP 2>/dev/null || ip6tables -I INPUT 1 -m set --match-set $ASN-6 src -j DROP"
+    echo "ip6tables -C FORWARD -m set --match-set $ASN-6 src -j DROP 2>/dev/null || ip6tables -I FORWARD 1 -m set --match-set $ASN-6 src -j DROP"
   } >> "$ASN-ipset-$today.sh"
   # Create target directory if it does not exist.
   mkdir -p "$OWD/ipset"

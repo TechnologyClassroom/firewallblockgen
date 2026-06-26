@@ -40,8 +40,7 @@
 # 6. Run the individual scripts like so.
 #      bash ddos-ipset-20260201.sh
 
-# TODO Improve script to work with safe bash and unvalidated entries.
-#set -euo pipefail
+set -euo pipefail
 #set -euxo pipefail  # DEBUG
 
 # Where is the file with the IP list?
@@ -53,6 +52,18 @@ today=$(date +%Y%m%d)
 # What should the names of the ipsets start with?
 name="ddos"
 
+if [ ! -f "$iplistfile" ]; then
+  echo "ERROR: $iplistfile not found! Create it with one IP per line." >&2
+  exit 1
+fi
+# Keep only valid IP/CIDR lines so malformed input cannot become an ipset
+# entry in the generated root script.
+sane="$(grep -E '^[0-9A-Fa-f:.]+(/[0-9]{1,3})?$' "$iplistfile" || true)"
+if [ -z "$sane" ]; then
+  echo "ERROR: no valid IP/CIDR lines in $iplistfile." >&2
+  exit 1
+fi
+
 echo -e "Building ipset script...\n"
 
 echo "Building $name ipset script in $(pwd)/$name-ipset-$today.sh file..."
@@ -63,23 +74,18 @@ echo "Building $name ipset script in $(pwd)/$name-ipset-$today.sh file..."
   # different ipsets and swap them in.
   #echo "ipset -X $name-4" > "$name-ipset-$today.sh"
   #echo "ipset -X $name-6" >> "$name-ipset-$today.sh"
-  # Create ipsets to block individual addresses.
-  # The default around 60,000 entries is probably enough, but if you need more
-  # use this syntax with maxelem:
-  #   ipset -N $name-4 hash:ip family inet maxelem 300000
-  echo "ipset -N $name-4 hash:ip family inet"
-  echo "ipset -N $name-6 hash:ip family inet6"
-  # Create ipsets to block a CIDR range.
-  #echo "ipset -N $name-4 hash:net family inet" >> "$name-ipset-$today.sh"
-  #echo "ipset -N $name-6 hash:net family inet6" >> "$name-ipset-$today.sh"
+  # Create ipsets to block individual addresses (idempotent; large maxelem
+  # since the default is only ~65536).
+  echo "ipset -exist create $name-4 hash:ip family inet maxelem 300000"
+  echo "ipset -exist create $name-6 hash:ip family inet6 maxelem 300000"
   # Add IPs to ipset script.
-  grep -v ":" "$iplistfile" \
-    | sed "s/^/ipset -A $name-4 /g"
-  grep ":" "$iplistfile" \
-    | sed "s/^/ipset -A $name-6 /g"
-  # Add the ipset to iptables
-  echo "iptables -I INPUT 1 -m set --match-set $name-4 src -j DROP"
-  echo "iptables -I FORWARD 1 -m set --match-set $name-4 src -j DROP"
-  echo "ip6tables -I INPUT 1 -m set --match-set $name-6 src -j DROP"
-  echo "ip6tables -I FORWARD 1 -m set --match-set $name-6 src -j DROP"
+  printf '%s\n' "$sane" | grep -v ":" | sed "s|^|ipset -exist add $name-4 |" || true
+  printf '%s\n' "$sane" | grep ":"    | sed "s|^|ipset -exist add $name-6 |" || true
+  # Insert iptables rules only if they are not already present.
+  echo "iptables -C INPUT -m set --match-set $name-4 src -j DROP 2>/dev/null || iptables -I INPUT 1 -m set --match-set $name-4 src -j DROP"
+  echo "iptables -C FORWARD -m set --match-set $name-4 src -j DROP 2>/dev/null || iptables -I FORWARD 1 -m set --match-set $name-4 src -j DROP"
+  echo "ip6tables -C INPUT -m set --match-set $name-6 src -j DROP 2>/dev/null || ip6tables -I INPUT 1 -m set --match-set $name-6 src -j DROP"
+  echo "ip6tables -C FORWARD -m set --match-set $name-6 src -j DROP 2>/dev/null || ip6tables -I FORWARD 1 -m set --match-set $name-6 src -j DROP"
 } >> "$name-ipset-$today.sh"
+
+exit 0

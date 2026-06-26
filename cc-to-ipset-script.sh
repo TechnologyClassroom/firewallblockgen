@@ -49,8 +49,7 @@
 #    with this BASH loop command:
 #      for i in $(ls *.sh); do echo $i; bash $i; done
 
-# TODO Improve script to work with safe bash and unvalidated entries.
-#set -euo pipefail
+set -euo pipefail
 #set -euxo pipefail  # DEBUG
 
 # Where is the file with the country code list?
@@ -64,34 +63,47 @@ echo -e "Building ipset scripts...\n"
 # Original working directory.
 OWD="$(pwd)"
 
-# Change to a temporary directory.
-cd "$(mktemp -d)" || exit
+# Change to a temporary directory (removed on exit).
+TMPDIR_BUILD="$(mktemp -d)"
+trap 'rm -rf "$TMPDIR_BUILD"' EXIT
+cd "$TMPDIR_BUILD" || exit 1
 
-while read -r CC; do
+# read also yields a final line with no trailing newline.
+while read -r CC || [ -n "$CC" ]; do
+  # Validate the country code; skip anything that is not two letters.
+  if ! [[ "$CC" =~ ^[A-Za-z]{2}$ ]]; then
+    echo "WARNING: skipping invalid country code: '$CC'" >&2
+    continue
+  fi
   addressSet4="$CC-4"
   addressSet6="$CC-6"
   echo "Building $CC list in $(pwd)"
-  # Download the CC list.
-  wget -qO "$CC-$today.txt" "https://www.ipdeny.com/ipblocks/data/countries/$CC.zone"
+  # Download the CC list (ipdeny zone files are lowercase); skip on failure.
+  if ! wget -qO "$CC-$today.txt" \
+      "https://www.ipdeny.com/ipblocks/data/countries/${CC,,}.zone" \
+      || [ ! -s "$CC-$today.txt" ]; then
+    echo "WARNING: download failed or empty for $CC; skipping." >&2
+    continue
+  fi
+  # Keep only valid IP/CIDR lines so a stray HTML error page cannot become an
+  # ipset entry in the generated root script.
+  sane="$(grep -E '^[0-9A-Fa-f:.]+(/[0-9]{1,3})?$' "$CC-$today.txt" || true)"
+  if [ -z "$sane" ]; then
+    echo "WARNING: no valid IP/CIDR lines for $CC; skipping." >&2
+    continue
+  fi
   {
-    # Destroy ipsets.
-    # Note: This does not work for existing ipsets in use. You would need to make
-    # different ipsets and swap them in.
-    #echo "ipset -X $addressSet4" > "$CC-ipset-$today.sh"
-    #echo "ipset -X $addressSet6" >> "$CC-ipset-$today.sh"
-    # Create ipsets to block a CIDR range.
-    echo "ipset -N $addressSet4 hash:net family inet"
-    echo "ipset -N $addressSet6 hash:net family inet6"
-    # Add CIDR to ipset.
-    grep -v ":" "$CC-$today.txt" \
-      | sed "s/^/ipset -A $addressSet4 /g"
-    grep ":" "$CC-$today.txt" \
-      | sed "s/^/ipset -A $addressSet6 /g"
-    # Adds the ipset to iptables for all ports.
-    echo "iptables -I INPUT 1 -m set --match-set $addressSet4 src -j DROP"
-    echo "iptables -I FORWARD 1 -m set --match-set $addressSet4 src -j DROP"
-    echo "ip6tables -I INPUT 1 -m set --match-set $addressSet6 src -j DROP"
-    echo "ip6tables -I FORWARD 1 -m set --match-set $addressSet6 src -j DROP"
+    # Create ipsets (idempotent; large maxelem for big countries).
+    echo "ipset -exist create $addressSet4 hash:net family inet maxelem 200000"
+    echo "ipset -exist create $addressSet6 hash:net family inet6 maxelem 200000"
+    # Add CIDR/IP entries.
+    printf '%s\n' "$sane" | grep -v ":" | sed "s|^|ipset -exist add $addressSet4 |" || true
+    printf '%s\n' "$sane" | grep ":"    | sed "s|^|ipset -exist add $addressSet6 |" || true
+    # Insert iptables rules only if they are not already present.
+    echo "iptables -C INPUT -m set --match-set $addressSet4 src -j DROP 2>/dev/null || iptables -I INPUT 1 -m set --match-set $addressSet4 src -j DROP"
+    echo "iptables -C FORWARD -m set --match-set $addressSet4 src -j DROP 2>/dev/null || iptables -I FORWARD 1 -m set --match-set $addressSet4 src -j DROP"
+    echo "ip6tables -C INPUT -m set --match-set $addressSet6 src -j DROP 2>/dev/null || ip6tables -I INPUT 1 -m set --match-set $addressSet6 src -j DROP"
+    echo "ip6tables -C FORWARD -m set --match-set $addressSet6 src -j DROP 2>/dev/null || ip6tables -I FORWARD 1 -m set --match-set $addressSet6 src -j DROP"
     # Adds the ipset to iptables for only ports 80 and 443 for tcp connections.
     # echo "iptables -I INPUT 1 -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet4 src -j DROP"
     # echo "iptables -I FORWARD 1 -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet4 src -j DROP"
@@ -104,3 +116,9 @@ while read -r CC; do
   # Do not become the monster that you seek to extinguish.
   sleep 4
 done < "$OWD/$asnlistfile"
+
+echo -e "\nIf builds were successful, ipset scripts can be found in the"
+echo -e "$OWD/ipset/ directory.\n"
+echo "Copy the scripts to the servers that need the block and run them."
+
+exit 0
