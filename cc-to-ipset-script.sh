@@ -2,7 +2,7 @@
 
 # cc-to-ipset-script.sh
 # Generate scripts to block countries using ipset from a list of country codes.
-# Version 20260201
+# Version 20260626
 #
 # Copyright (C) 2025-2026 Michael McMahon
 #
@@ -65,14 +65,14 @@ OWD="$(pwd)"
 
 # Change to a temporary directory (removed on exit).
 TMPDIR_BUILD="$(mktemp -d)"
-trap 'rm -rf "$TMPDIR_BUILD"' EXIT
+#trap 'rm -rf "$TMPDIR_BUILD"' EXIT
 cd "$TMPDIR_BUILD" || exit 1
 
 # read also yields a final line with no trailing newline.
 while read -r CC || [ -n "$CC" ]; do
-  # Validate the country code; skip anything that is not two letters.
+  # Validate the country code. Skip anything that is not two letters.
   if ! [[ "$CC" =~ ^[A-Za-z]{2}$ ]]; then
-    echo "WARNING: skipping invalid country code: '$CC'" >&2
+    echo "WARNING: Skipping invalid country code: '$CC'" >&2
     continue
   fi
   addressSet4="$CC-4"
@@ -82,7 +82,7 @@ while read -r CC || [ -n "$CC" ]; do
   if ! wget -qO "$CC-$today.txt" \
       "https://www.ipdeny.com/ipblocks/data/countries/${CC,,}.zone" \
       || [ ! -s "$CC-$today.txt" ]; then
-    echo "WARNING: download failed or empty for $CC; skipping." >&2
+    echo "WARNING: Download failed or empty for $CC. Skipping." >&2
     continue
   fi
   # Keep only valid IP/CIDR lines so a stray HTML error page cannot become an
@@ -92,23 +92,44 @@ while read -r CC || [ -n "$CC" ]; do
     echo "WARNING: no valid IP/CIDR lines for $CC; skipping." >&2
     continue
   fi
+  # Count how large the ipset needs to be. Do not waste extra resources.
+  ipv4max="$(printf '%s\n' "$sane" | grep -c -v ":" || true)"
+  ipv6max="$(printf '%s\n' "$sane" | grep -c ":" || true)"
   {
-    # Create ipsets (idempotent; large maxelem for big countries).
-    echo "ipset -exist create $addressSet4 hash:net family inet maxelem 200000"
-    echo "ipset -exist create $addressSet6 hash:net family inet6 maxelem 200000"
-    # Add CIDR/IP entries.
-    printf '%s\n' "$sane" | grep -v ":" | sed "s|^|ipset -exist add $addressSet4 |" || true
-    printf '%s\n' "$sane" | grep ":"    | sed "s|^|ipset -exist add $addressSet6 |" || true
-    # Insert iptables rules only if they are not already present.
-    echo "iptables -C INPUT -m set --match-set $addressSet4 src -j DROP 2>/dev/null || iptables -I INPUT 1 -m set --match-set $addressSet4 src -j DROP"
-    echo "iptables -C FORWARD -m set --match-set $addressSet4 src -j DROP 2>/dev/null || iptables -I FORWARD 1 -m set --match-set $addressSet4 src -j DROP"
-    echo "ip6tables -C INPUT -m set --match-set $addressSet6 src -j DROP 2>/dev/null || ip6tables -I INPUT 1 -m set --match-set $addressSet6 src -j DROP"
-    echo "ip6tables -C FORWARD -m set --match-set $addressSet6 src -j DROP 2>/dev/null || ip6tables -I FORWARD 1 -m set --match-set $addressSet6 src -j DROP"
-    # Adds the ipset to iptables for only ports 80 and 443 for tcp connections.
-    # echo "iptables -I INPUT 1 -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet4 src -j DROP"
-    # echo "iptables -I FORWARD 1 -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet4 src -j DROP"
-    # echo "ip6tables -I INPUT 1 -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet6 src -j DROP"
-    # echo "ip6tables -I FORWARD 1 -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet6 src -j DROP"
+    # Build ipset script.
+    if [ "$ipv4max" -gt 0 ]; then
+      # Create ipset.
+      echo "ipset -exist create $addressSet4 hash:net family inet maxelem $ipv4max"
+      # Add CIDR/IP entries.
+      printf '%s\n' "$sane" \
+        | grep -v ":" \
+        | sed "s|^|ipset -exist add $addressSet4 |" \
+        || true
+      # Insert iptables rules only if they are not already present.
+      echo "iptables -C INPUT -m set --match-set $addressSet4 src -j DROP 2>/dev/null || iptables -I INPUT 1 -m set --match-set $addressSet4 src -j DROP"
+      echo "iptables -C FORWARD -m set --match-set $addressSet4 src -j DROP 2>/dev/null || iptables -I FORWARD 1 -m set --match-set $addressSet4 src -j DROP"
+      # Adds the ipset to iptables for only ports 80 and 443 for tcp connections.
+      # echo "iptables -C INPUT -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet4 src -j DROP 2>/dev/null || iptables -I INPUT 1 -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet4 src -j DROP"
+      # echo "iptables -C FORWARD -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet4 src -j DROP 2>/dev/null || iptables -I FORWARD 1 -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet4 src -j DROP"
+    fi
+    if [ "$ipv6max" -gt 0 ]; then
+      echo "ipset -exist create $addressSet6 hash:net family inet6 maxelem $ipv6max"
+      # Add CIDR/IP entries.
+      printf '%s\n' "$sane" \
+        | grep -v ":" \
+        | sed "s|^|ipset -exist add $addressSet4 |" \
+        || true
+      printf '%s\n' "$sane" \
+        | grep ":" \
+        | sed "s|^|ipset -exist add $addressSet6 |" \
+        || true
+      # Insert iptables rules only if they are not already present.
+      echo "ip6tables -C INPUT -m set --match-set $addressSet6 src -j DROP 2>/dev/null || ip6tables -I INPUT 1 -m set --match-set $addressSet6 src -j DROP"
+      echo "ip6tables -C FORWARD -m set --match-set $addressSet6 src -j DROP 2>/dev/null || ip6tables -I FORWARD 1 -m set --match-set $addressSet6 src -j DROP"
+      # Adds the ipset to iptables for only ports 80 and 443 for tcp connections.
+      # echo "ip6tables -C INPUT -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet6 src -j DROP 2>/dev/null || ip6tables -I INPUT 1 -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet6 src -j DROP"
+      # echo "ip6tables -C FORWARD -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet6 src -j DROP 2>/dev/null || ip6tables -I FORWARD 1 -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet6 src -j DROP"
+    fi
   } >> "$CC-ipset-$today.sh"
   # Copy the file to the ipset directory.
   mkdir -p "$OWD/ipset"
