@@ -65,7 +65,7 @@ OWD="$(pwd)"
 
 # Change to a temporary directory (removed on exit).
 TMPDIR_BUILD="$(mktemp -d)"
-#trap 'rm -rf "$TMPDIR_BUILD"' EXIT
+trap 'rm -rf "$TMPDIR_BUILD"' EXIT
 cd "$TMPDIR_BUILD" || exit 1
 
 # read also yields a final line with no trailing newline.
