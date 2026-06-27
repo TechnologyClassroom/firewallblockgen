@@ -2,7 +2,7 @@
 
 # ip-to-asn-info.sh
 # Generate CSV formatted data with ASN lookup information from a list of IP addresses.
-# Version 20260603
+# Version 20260626
 #
 # Copyright (C) 2025-2026 Michael McMahon
 #

@@ -3,7 +3,7 @@
 # ip-to-asn-shorewall-commands.sh
 # Generate shorewall commands to temporarily block IP addresses with ASN
 # information in a comment from a list of IP addresses.
-# Version 20260205
+# Version 20260626
 #
 # Copyright (C) 2024-2026 Michael McMahon
 #

@@ -2,7 +2,7 @@
 
 # ip-to-asn-iptables-config.sh
 # Generate iptables configuration rules including ASN information from a list of IP addresses.
-# Version 20260201
+# Version 20260626
 #
 # Copyright (C) 2024-2026 Michael McMahon
 #

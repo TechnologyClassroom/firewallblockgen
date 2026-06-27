@@ -4,7 +4,7 @@
 # ip-to-asn-ufw-commands.sh
 # Generate UFW commands to block IP addresses with ASN information in comments
 # from a list of IP addresses.
-# Version 20260205
+# Version 20260626
 #
 # Copyright (C) 2024-2026 Michael McMahon
 #
