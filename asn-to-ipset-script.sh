@@ -89,27 +89,35 @@ while read -r ASN || [ -n "$ASN" ]; do
     echo "WARNING: no valid IP/CIDR lines for AS$ASN; skipping." >&2
     continue
   fi
+  # Count how large the ipset needs to be. Do not waste extra resources.
+  ipv4max="$(printf '%s\n' "$sane" | grep -c -v ":" || true)"
+  ipv6max="$(printf '%s\n' "$sane" | grep -c ":" || true)"
   {
-    # Count how large the ipset needs to be. Do not waste extra resources.
-    ipv4max="$(printf '%s\n' "$sane" | grep -v ":" | wc -l)"
-    ipv6max="$(printf '%s\n' "$sane" | grep ":" | wc -l)"
-    # Create ipsets.
-    echo "ipset -exist create $ASN-4 hash:net family inet maxelem $ipv4max"
-    echo "ipset -exist create $ASN-6 hash:net family inet6 maxelem $ipv6max"
-    # Add CIDR/IP entries.
-    printf '%s\n' "$sane" \
-      | grep -v ":" \
-      | sed "s|^|ipset -exist add $ASN-4 |" \
-      || true
-    printf '%s\n' "$sane" \
-      | grep ":" \
-      | sed "s|^|ipset -exist add $ASN-6 |" \
-      || true
-    # Insert iptables rules only if they are not already present.
-    echo "iptables -C INPUT -m set --match-set $ASN-4 src -j DROP 2>/dev/null || iptables -I INPUT 1 -m set --match-set $ASN-4 src -j DROP"
-    echo "iptables -C FORWARD -m set --match-set $ASN-4 src -j DROP 2>/dev/null || iptables -I FORWARD 1 -m set --match-set $ASN-4 src -j DROP"
-    echo "ip6tables -C INPUT -m set --match-set $ASN-6 src -j DROP 2>/dev/null || ip6tables -I INPUT 1 -m set --match-set $ASN-6 src -j DROP"
-    echo "ip6tables -C FORWARD -m set --match-set $ASN-6 src -j DROP 2>/dev/null || ip6tables -I FORWARD 1 -m set --match-set $ASN-6 src -j DROP"
+    # Build ipset script.
+    if [ "$ipv4max" -gt 0 ]; then
+      # Create ipsets.
+      echo "ipset -exist create $ASN-4 hash:net family inet maxelem $ipv4max"
+      # Add CIDR/IP entries.
+      printf '%s\n' "$sane" \
+        | grep -v ":" \
+        | sed "s|^|ipset -exist add $ASN-4 |" \
+        || true
+      # Create ipsets.
+      echo "ipset -exist create $ASN-6 hash:net family inet6 maxelem $ipv6max"
+      # Insert iptables rules only if they are not already present.
+      echo "iptables -C INPUT -m set --match-set $ASN-4 src -j DROP 2>/dev/null || iptables -I INPUT 1 -m set --match-set $ASN-4 src -j DROP"
+      echo "iptables -C FORWARD -m set --match-set $ASN-4 src -j DROP 2>/dev/null || iptables -I FORWARD 1 -m set --match-set $ASN-4 src -j DROP"
+    fi
+    if [ "$ipv6max" -gt 0 ]; then
+      # Add CIDR/IP entries.
+      printf '%s\n' "$sane" \
+        | grep ":" \
+        | sed "s|^|ipset -exist add $ASN-6 |" \
+        || true
+      # Insert iptables rules only if they are not already present.
+      echo "ip6tables -C INPUT -m set --match-set $ASN-6 src -j DROP 2>/dev/null || ip6tables -I INPUT 1 -m set --match-set $ASN-6 src -j DROP"
+      echo "ip6tables -C FORWARD -m set --match-set $ASN-6 src -j DROP 2>/dev/null || ip6tables -I FORWARD 1 -m set --match-set $ASN-6 src -j DROP"
+    fi
   } >> "$ASN-ipset-$today.sh"
   # Create target directory if it does not exist.
   mkdir -p "$OWD/ipset"
