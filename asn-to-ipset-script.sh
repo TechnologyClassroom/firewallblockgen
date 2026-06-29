@@ -2,7 +2,7 @@
 
 # asn-to-ipset-script.sh
 # Generate scripts to block ASNs with ipset from a list of ASNs.
-# Version 20260626
+# Version 20260629
 #
 # Copyright (C) 2025-2026 Michael McMahon
 #
@@ -96,23 +96,23 @@ while read -r ASN || [ -n "$ASN" ]; do
     # Build ipset script.
     if [ "$ipv4max" -gt 0 ]; then
       # Create ipsets.
-      echo "ipset -exist create $ASN-4 hash:net family inet maxelem $ipv4max"
+      echo "ipset -exist -N $ASN-4 hash:net family inet maxelem $ipv4max"
       # Add CIDR/IP entries.
       printf '%s\n' "$sane" \
         | grep -v ":" \
-        | sed "s|^|ipset -exist add $ASN-4 |" \
+        | sed "s|^|ipset -exist -A $ASN-4 |" \
         || true
-      # Create ipsets.
-      echo "ipset -exist create $ASN-6 hash:net family inet6 maxelem $ipv6max"
       # Insert iptables rules only if they are not already present.
       echo "iptables -C INPUT -m set --match-set $ASN-4 src -j DROP 2>/dev/null || iptables -I INPUT 1 -m set --match-set $ASN-4 src -j DROP"
       echo "iptables -C FORWARD -m set --match-set $ASN-4 src -j DROP 2>/dev/null || iptables -I FORWARD 1 -m set --match-set $ASN-4 src -j DROP"
     fi
     if [ "$ipv6max" -gt 0 ]; then
+      # Create ipsets.
+      echo "ipset -exist -N $ASN-6 hash:net family inet6 maxelem $ipv6max"
       # Add CIDR/IP entries.
       printf '%s\n' "$sane" \
         | grep ":" \
-        | sed "s|^|ipset -exist add $ASN-6 |" \
+        | sed "s|^|ipset -exist -A $ASN-6 |" \
         || true
       # Insert iptables rules only if they are not already present.
       echo "ip6tables -C INPUT -m set --match-set $ASN-6 src -j DROP 2>/dev/null || ip6tables -I INPUT 1 -m set --match-set $ASN-6 src -j DROP"
