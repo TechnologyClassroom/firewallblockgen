@@ -2,7 +2,7 @@
 
 # ip-to-ipset-script.sh
 # Convert list of IPs to script to block all through ipset and iptables.
-# Version 20260201
+# Version 20260629
 #
 # Copyright (C) 2025-2026 Michael McMahon
 #
@@ -68,22 +68,32 @@ echo -e "Building ipset script...\n"
 
 echo "Building $name ipset script in $(pwd)/$name-ipset-$today.sh file..."
 {
-  # Download the list.
+  # IPv4
   # Destroy ipsets.
   # Note: This does not work for existing ipsets in use. You would need to make
   # different ipsets and swap them in.
   #echo "ipset -X $name-4" > "$name-ipset-$today.sh"
-  #echo "ipset -X $name-6" >> "$name-ipset-$today.sh"
-  # Create ipsets to block individual addresses (idempotent; large maxelem
-  # since the default is only ~65536).
-  echo "ipset -exist create $name-4 hash:ip family inet maxelem 300000"
-  echo "ipset -exist create $name-6 hash:ip family inet6 maxelem 300000"
+  # Create ipsets to block individual addresses.
+  echo "ipset -exist -N $name-4 hash:ip family inet maxelem 300000"
   # Add IPs to ipset script.
-  printf '%s\n' "$sane" | grep -v ":" | sed "s|^|ipset -exist add $name-4 |" || true
-  printf '%s\n' "$sane" | grep ":"    | sed "s|^|ipset -exist add $name-6 |" || true
+  printf '%s\n' "$sane" \
+    | grep -v ":" \
+    | sed "s|^|ipset -exist -A $name-4 |" \
+    || true
   # Insert iptables rules only if they are not already present.
   echo "iptables -C INPUT -m set --match-set $name-4 src -j DROP 2>/dev/null || iptables -I INPUT 1 -m set --match-set $name-4 src -j DROP"
   echo "iptables -C FORWARD -m set --match-set $name-4 src -j DROP 2>/dev/null || iptables -I FORWARD 1 -m set --match-set $name-4 src -j DROP"
+  # IPv6
+  # Destroy ipsets.
+  #echo "ipset -X $name-6" >> "$name-ipset-$today.sh"
+  # Create ipsets to block individual addresses.
+  echo "ipset -exist -N $name-6 hash:ip family inet6 maxelem 300000"
+  # Add IPs to ipset script.
+  printf '%s\n' "$sane" \
+    | grep ":" \
+    | sed "s|^|ipset -exist -A $name-6 |" \
+    || true
+  # Insert iptables rules only if they are not already present.
   echo "ip6tables -C INPUT -m set --match-set $name-6 src -j DROP 2>/dev/null || ip6tables -I INPUT 1 -m set --match-set $name-6 src -j DROP"
   echo "ip6tables -C FORWARD -m set --match-set $name-6 src -j DROP 2>/dev/null || ip6tables -I FORWARD 1 -m set --match-set $name-6 src -j DROP"
 } >> "$name-ipset-$today.sh"
