@@ -143,12 +143,13 @@ sed 's/^/-e "/g;s/$/"/g' "$iplistfile" \
 echo
 
 # Build a command to manually ban with reaction.
-# Example: for i in 192.168.1.3 192.168.1.4 ; do echo "$i" ; reaction trigger apache.badbots ip="$i" ; done
-echo -e "\nThis one-liner can be modified to ban these addresses if necessary:"
+# Example: for i in 192.168.1.3 192.168.1.4 ; do echo "$i" ; reaction trigger web1.badbots ip="$i" ; done
+echo -e "\nThis one-liner can be modified to ban these addresses with reaction"
+echo "if necessary:"
 cat "$iplistfile" \
   | tr '\n' ' ' \
   | sed 's/^/for i in /g' \
-  | sed 's/$/ \; do echo "$i" \; reaction trigger apache.badbots ip="$i" \; done/g'
+  | sed 's/$/ \; do echo "$i" \; reaction trigger web1.badbots ip="$i" \; done/g'
 echo
 
 exit 0
