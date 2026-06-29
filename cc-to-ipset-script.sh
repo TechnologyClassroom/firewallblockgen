@@ -2,7 +2,7 @@
 
 # cc-to-ipset-script.sh
 # Generate scripts to block countries using ipset from a list of country codes.
-# Version 20260626
+# Version 20260629
 #
 # Copyright (C) 2025-2026 Michael McMahon
 #
@@ -99,11 +99,11 @@ while read -r CC || [ -n "$CC" ]; do
     # Build ipset script.
     if [ "$ipv4max" -gt 0 ]; then
       # Create ipset.
-      echo "ipset -exist create $addressSet4 hash:net family inet maxelem $ipv4max"
+      echo "ipset -exist -N $addressSet4 hash:net family inet maxelem $ipv4max"
       # Add CIDR/IP entries.
       printf '%s\n' "$sane" \
         | grep -v ":" \
-        | sed "s|^|ipset -exist add $addressSet4 |" \
+        | sed "s|^|ipset -exist -A $addressSet4 |" \
         || true
       # Insert iptables rules only if they are not already present.
       echo "iptables -C INPUT -m set --match-set $addressSet4 src -j DROP 2>/dev/null || iptables -I INPUT 1 -m set --match-set $addressSet4 src -j DROP"
@@ -113,15 +113,11 @@ while read -r CC || [ -n "$CC" ]; do
       # echo "iptables -C FORWARD -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet4 src -j DROP 2>/dev/null || iptables -I FORWARD 1 -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet4 src -j DROP"
     fi
     if [ "$ipv6max" -gt 0 ]; then
-      echo "ipset -exist create $addressSet6 hash:net family inet6 maxelem $ipv6max"
+      echo "ipset -exist -N $addressSet6 hash:net family inet6 maxelem $ipv6max"
       # Add CIDR/IP entries.
       printf '%s\n' "$sane" \
-        | grep -v ":" \
-        | sed "s|^|ipset -exist add $addressSet4 |" \
-        || true
-      printf '%s\n' "$sane" \
         | grep ":" \
-        | sed "s|^|ipset -exist add $addressSet6 |" \
+        | sed "s|^|ipset -exist -A $addressSet6 |" \
         || true
       # Insert iptables rules only if they are not already present.
       echo "ip6tables -C INPUT -m set --match-set $addressSet6 src -j DROP 2>/dev/null || ip6tables -I INPUT 1 -m set --match-set $addressSet6 src -j DROP"
