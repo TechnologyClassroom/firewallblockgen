@@ -149,7 +149,7 @@ wc -l crawlpattern.txt
 # 38220
 
 # Block the findings with reaction if available.
-if command -v <the_command> >/dev/null 2>&1 ; then
+if command -v reaction >/dev/null 2>&1 ; then
   for i in $(cat crawlpattern.txt) ; do
     reaction trigger web1.badbots ip="$i"
   done
