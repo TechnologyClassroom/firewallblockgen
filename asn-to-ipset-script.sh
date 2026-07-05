@@ -2,7 +2,7 @@
 
 # asn-to-ipset-script.sh
 # Generate scripts to block ASNs with ipset from a list of ASNs.
-# Version 20260629
+# Version 20260705
 #
 # Copyright (C) 2025-2026 Michael McMahon
 #
@@ -74,6 +74,8 @@ while read -r ASN || [ -n "$ASN" ]; do
     echo "WARNING: skipping invalid ASN: '$ASN'" >&2
     continue
   fi
+  addressSet4="$ASN-4"
+  addressSet6="$ASN-6"
   echo "Building $ASN list in $(pwd)"
   # Download the ASN list; skip the ASN on a failed or empty download.
   if ! wget -qO "$ASN-$today.txt" \
@@ -110,49 +112,65 @@ while read -r ASN || [ -n "$ASN" ]; do
     echo "# 4. Run the individual scripts like so."
     echo "#      bash $ASN-ipset-$today.sh"
     echo -e "\nset -euo pipefail\n#set -euxo pipefail  # DEBUG\n"
+    # IPv4
     if [ "$ipv4max" -gt 0 ]; then
       # Create two ipsets with the final name and a temporary name. ipset -N is
       # an abbreviated way to write ipset create.
-      echo "ipset -exist -N $ASN-4 hash:net family inet maxelem $ipv4max"
-      echo "ipset -exist -N tmp$ASN-4 hash:net family inet maxelem $ipv4max"
-      # Add CIDR/IP entries. ipset -A is an abbreviated way to write ipset add.
+      echo "ipset -exist -N $addressSet4 hash:net family inet maxelem $ipv4max"
+      echo "ipset -exist -N tmp$addressSet4 hash:net family inet maxelem $ipv4max"
+      # Send the data straight to `ipset restore` without an intermediary file
+      # or running individual `ipset add` commands. This uses heredoc format.
+      echo "cat << 'EOF' | ipset restore"
+      # Add CIDR/IP entries.
       printf '%s\n' "$sane" \
         | grep -v ":" \
-        | sed "s|^|ipset -exist -A tmp$ASN-4 |" \
+        | sed "s|^|  add tmp$addressSet4 |" \
         || true
+      echo "EOF"
       # Swap the temporary ipset over the live ipset. This way the the script
       # can be run even if a previous version was applied to the system. ipset
       # -W is an abbreviated way to write ipset swap.
-      echo "ipset -W $ASN-4 tmp$ASN-4"
+      echo "ipset -W $addressSet4 tmp$addressSet4"
       # Destroy the extra temporary ipset. ipset -X is an abbreviated way to
       # write ipset destroy.
-      echo "ipset -X tmp$ASN-4"
+      echo "ipset -X tmp$addressSet4"
       # Insert iptables rules only if they are not already present.
-      echo "iptables -C INPUT -m set --match-set $ASN-4 src -j DROP 2>/dev/null || iptables -I INPUT 1 -m set --match-set $ASN-4 src -j DROP"
-      echo "iptables -C FORWARD -m set --match-set $ASN-4 src -j DROP 2>/dev/null || iptables -I FORWARD 1 -m set --match-set $ASN-4 src -j DROP"
+      echo "iptables -C INPUT -m set --match-set $addressSet4 src -j DROP 2>/dev/null || iptables -I INPUT 1 -m set --match-set $addressSet4 src -j DROP"
+      echo "iptables -C FORWARD -m set --match-set $addressSet4 src -j DROP 2>/dev/null || iptables -I FORWARD 1 -m set --match-set $addressSet4 src -j DROP"
+      # Adds the ipset to iptables for only ports 80 and 443 for tcp connections.
+      # echo "iptables -C INPUT -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet4 src -j DROP 2>/dev/null || iptables -I INPUT 1 -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet4 src -j DROP"
+      # echo "iptables -C FORWARD -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet4 src -j DROP 2>/dev/null || iptables -I FORWARD 1 -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet4 src -j DROP"
     fi
+    # IPv6
     if [ "$ipv6max" -gt 0 ]; then
       # Create two ipsets with the final name and a temporary name. ipset -N is
       # an abbreviated way to write ipset create.
-      echo "ipset -exist -N $ASN-6 hash:net family inet6 maxelem $ipv6max"
-      echo "ipset -exist -N tmp$ASN-6 hash:net family inet6 maxelem $ipv6max"
-      # Add CIDR/IP entries. ipset -A is an abbreviated way to write ipset add.
+      echo "ipset -exist -N $addressSet6 hash:net family inet6 maxelem $ipv6max"
+      echo "ipset -exist -N tmp$addressSet6 hash:net family inet6 maxelem $ipv6max"
+      # Send the data straight to `ipset restore` without an intermediary file
+      # or running individual `ipset add` commands. This uses heredoc format.
+      echo "cat << 'EOF' | ipset restore"
+      # Add CIDR/IP entries.
       printf '%s\n' "$sane" \
         | grep ":" \
-        | sed "s|^|ipset -exist -A tmp$ASN-6 |" \
+        | sed "s|^|  add tmp$addressSet6 |" \
         || true
+      echo "EOF"
       # Swap the temporary ipset over the live ipset. This way the the script
       # can be run even if a previous version was applied to the system. ipset
       # -W is an abbreviated way to write ipset swap.
-      echo "ipset -W $ASN-6 tmp$ASN-6"
+      echo "ipset -W $addressSet6 tmp$addressSet6"
       # Destroy the extra temporary ipset. ipset -X is an abbreviated way to
       # write ipset destroy.
-      echo "ipset -X tmp$ASN-6"
+      echo "ipset -X tmp$addressSet6"
       # Insert iptables rules only if they are not already present.
-      echo "ip6tables -C INPUT -m set --match-set $ASN-6 src -j DROP 2>/dev/null || ip6tables -I INPUT 1 -m set --match-set $ASN-6 src -j DROP"
-      echo "ip6tables -C FORWARD -m set --match-set $ASN-6 src -j DROP 2>/dev/null || ip6tables -I FORWARD 1 -m set --match-set $ASN-6 src -j DROP"
-      echo -e "\nexit 0"
+      echo "ip6tables -C INPUT -m set --match-set $addressSet6 src -j DROP 2>/dev/null || ip6tables -I INPUT 1 -m set --match-set $addressSet6 src -j DROP"
+      echo "ip6tables -C FORWARD -m set --match-set $addressSet6 src -j DROP 2>/dev/null || ip6tables -I FORWARD 1 -m set --match-set $addressSet6 src -j DROP"
+      # Adds the ipset to iptables for only ports 80 and 443 for tcp connections.
+      # echo "ip6tables -C INPUT -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet6 src -j DROP 2>/dev/null || ip6tables -I INPUT 1 -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet6 src -j DROP"
+      # echo "ip6tables -C FORWARD -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet6 src -j DROP 2>/dev/null || ip6tables -I FORWARD 1 -p tcp -m multiport --dports 80,443 -m set --match-set $addressSet6 src -j DROP"
     fi
+    echo -e "\nexit 0"
   } >> "$ASN-ipset-$today.sh"
   # Create target directory if it does not exist.
   mkdir -p "$OWD/ipset"
