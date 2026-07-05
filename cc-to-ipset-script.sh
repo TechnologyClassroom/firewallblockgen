@@ -91,6 +91,9 @@ while read -r CC || [ -n "$CC" ]; do
     echo "WARNING: Download failed for IPv6 or empty for $CC. Skipping." >&2
     continue
   fi
+  # Make sure the files exist.
+  touch "$CC-$today.txt"
+  touch "$CC-ipv6-$today.txt"
   # Keep only valid IP/CIDR lines so a stray HTML error page cannot become an
   # ipset entry in the generated root script.
   sane="$(cat "$CC-$today.txt" "$CC-ipv6-$today.txt" | grep -E '^[0-9A-Fa-f:.]+(/[0-9]{1,3})?$' || true)"
