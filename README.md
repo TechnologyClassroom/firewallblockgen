@@ -1,7 +1,7 @@
 # FirewallBlockGen
 
-FirewallBlockGen is a collection of CLI BASH scripts to generate firewall rules
-to block collections of IPs, ASN ranges, or countries.
+FirewallBlockGen is a collection of BASH scripts to generate firewall rules to
+block collections of IPs, ASN ranges, or countries.
 
 For a visual demo of how I use the FirewallBlockGen scripts in context with my
 other tools, watch my BSides CT 2025 presentation
@@ -69,3 +69,10 @@ for a list of CIDR for an ASN. `cc-to-ipset-script.sh` currently depends on
 [IPdeny](https://www.ipdeny.com/ipblocks/) for a list of CIDR for a country.
 `asn-to-ipset-script.sh` and `cc-to-ipset-script.sh` do not depend on
 iptoasn-webservice.
+
+## user-agent searching
+
+Some bots will intentionally try to rotate through a list of user-agents to try
+to fly under the radar of many other tools. `ua-s-a-d.sh` can be fed a list of
+user-agents and if an IP uses three or more of the user-agents in the list, it
+will ban them with reaction if present.
