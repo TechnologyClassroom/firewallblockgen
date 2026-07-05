@@ -85,9 +85,15 @@ while read -r CC || [ -n "$CC" ]; do
     echo "WARNING: Download failed or empty for $CC. Skipping." >&2
     continue
   fi
+  if ! wget -qO "$CC-ipv6-$today.txt" \
+      "https://www.ipdeny.com/ipv6/ipaddresses/aggregated/${CC,,}-aggregated.zone" \
+      || [ ! -s "$CC-ipv6-$today.txt" ]; then
+    echo "WARNING: Download failed for IPv6 or empty for $CC. Skipping." >&2
+    continue
+  fi
   # Keep only valid IP/CIDR lines so a stray HTML error page cannot become an
   # ipset entry in the generated root script.
-  sane="$(grep -E '^[0-9A-Fa-f:.]+(/[0-9]{1,3})?$' "$CC-$today.txt" || true)"
+  sane="$(cat "$CC-$today.txt" "$CC-ipv6-$today.txt" | grep -E '^[0-9A-Fa-f:.]+(/[0-9]{1,3})?$' || true)"
   if [ -z "$sane" ]; then
     echo "WARNING: no valid IP/CIDR lines for $CC; skipping." >&2
     continue
