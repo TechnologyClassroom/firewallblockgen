@@ -85,6 +85,8 @@ while read -r CC || [ -n "$CC" ]; do
     echo "WARNING: Download failed or empty for $CC. Skipping." >&2
     continue
   fi
+  # Do not become the monster that you seek to extinguish.
+  sleep 4
   if ! wget -qO "$CC-ipv6-$today.txt" \
       "https://www.ipdeny.com/ipv6/ipaddresses/aggregated/${CC,,}-aggregated.zone" \
       || [ ! -s "$CC-ipv6-$today.txt" ]; then
