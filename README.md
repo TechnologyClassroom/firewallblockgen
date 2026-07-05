@@ -31,7 +31,13 @@ fail2ban.
 The FirewallBlockGen scripts live in the
 <https://github.com/TechnologyClassroom/firewallblockgen/> repository.
 
-## ASN Information and individual firewall rules
+## Dependencies
+
+These scripts have various dependencies. With the exception of
+iptoasn-webservice, the tools generally assume to be run from a GNU/Linux
+machine with dependencies that are simple to acquire.
+
+### iptoasn-webservice
 
 `ip-to-asn-info.sh`, `ip-to-asn-shorewall-commands.sh`,
 `ip-to-asn-iptables-config.sh`, and `ip-to-asn-ufw-commands.sh` depend on
@@ -53,7 +59,17 @@ have iptoasn-webservice running.
 
 `ip-to-asn-info.sh` has more debugging infrastructure so start with that one.
 
-Many of these scripts could be refactored into one.
+## ASN Information
+
+`ip-to-asn-info.sh` is a useful wrapper for iptoasn-webservice that can provide
+more information for a list of IP addresses. Instructions are in the file in
+comments.
+
+## Individual firewall rules
+
+`ip-to-asn-info.sh`, `ip-to-asn-shorewall-commands.sh`,
+`ip-to-asn-iptables-config.sh`, and `ip-to-asn-ufw-commands.sh` all generate
+variations of commands to block IP addresses with firewall tools.
 
 ## ASN and Country blocking
 
@@ -70,7 +86,7 @@ for a list of CIDR for an ASN. `cc-to-ipset-script.sh` currently depends on
 `asn-to-ipset-script.sh` and `cc-to-ipset-script.sh` do not depend on
 iptoasn-webservice.
 
-## user-agent searching
+## User-agent searching
 
 Some bots will intentionally try to rotate through a list of user-agents to try
 to fly under the radar of many other tools. `ua-s-a-d.sh` can be fed a list of
