@@ -2,7 +2,7 @@
 
 # ip-to-asn-iptables-config.sh
 # Generate iptables configuration rules including ASN information from a list of IP addresses.
-# Version 20260626
+# Version 20260705
 #
 # Copyright (C) 2024-2026 Michael McMahon
 #
@@ -49,21 +49,57 @@
 apiip=127.0.0.1
 apiport=53661
 
+# Where is the file with IP addresses?
+iplistfile="ip-to-asn-iptables-config.txt"
+
 # What is today?
 today=$(date +%Y%m%d)
 
-# Where is the file with IP addresses?
-iplistfile="ip-to-asn-iptables-config.txt"
+# Test that local dependencies are met.
+for i in curl jq sed echo bash tr cat date; do
+  if command -v "$i" >/dev/null 2>&1 ; then
+    continue
+  else
+    echo "ERROR: $i not found! Install $i before continuing."
+    exit 1
+  fi
+done
+
+# Validate that the $iplistfile exists.
+if [ ! -f $iplistfile ]; then
+  echo "ERROR: $iplistfile not found! Make sure that $iplistfile"
+  echo "exists with a list of IP addresses to lookup and that \$iplistfile is"
+  echo "pointing to your file."
+  exit 1
+fi
 
 echo -e "Rules for iptables that can be applied to a server to block these addresses if necessary.\n"
 
 # Debug API with this command:
-#   curl -H'Accept: application/json' "192.168.50.102:80/v1/as/ip/8.8.8.8"
+#   curl -H'Accept: application/json' "$apiip:$apiport/v1/as/ip/8.8.8.8"
 
-if [ ! -f "$iplistfile" ]; then
-  echo "ERROR: $iplistfile not found! Create it with one IP per line." >&2
+# Test that iptoasn-webservice query is functional.
+tmpdir=$(mktemp -d) || exit
+# Make a curl response asking about Google's DNS.
+http_response=$(curl -o "$tmpdir"/response.json -s -w "%{http_code}\n" \
+  -H'Accept: application/json' $apiip:$apiport/v1/as/ip/8.8.8.8)
+# Check if there was a 200 response.
+if [ "$http_response" != "200" ]; then
+  echo "ERROR: Could not connect to API! Check that your iptoasn-webservice"
+  echo "instance is funtional. https://github.com/jedisct1/iptoasn-webservice"
   exit 1
+else
+  # Check if the query returns an AS description to test whether the query works.
+  if [ "$(jq -e .as_description < "$tmpdir"/response.json \
+        &>/dev/null; echo $?)" -gt 0 ]; then
+    echo "ERROR: Test JSON response is invalid! Check that the ASN list is"
+    echo "present and that iptoasn-webservice is functional."
+    exit 1
+  fi
 fi
+
+echo "ip-to-asn-iptables.sh provides firewall rules for along with additional information. This can"
+echo -e"help include useful information with saved rules.\n"
 
 # read also yields a final line with no trailing newline.
 while read -r IPTOASN || [ -n "$IPTOASN" ]; do
