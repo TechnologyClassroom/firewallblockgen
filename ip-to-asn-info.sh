@@ -2,7 +2,7 @@
 
 # ip-to-asn-info.sh
 # Generate CSV formatted data with ASN lookup information from a list of IP addresses.
-# Version 20260629
+# Version 20260705
 #
 # Copyright (C) 2025-2026 Michael McMahon
 #
@@ -53,7 +53,6 @@
 # exposed. Default local API IP address is 0.0.0.0 and default port is 53661.
 apiip=127.0.0.1
 apiport=53661
-#apiport=80
 
 # Where is the file with IP addresses?
 iplistfile="ip-to-asn-info.txt"
