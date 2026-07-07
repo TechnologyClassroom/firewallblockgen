@@ -80,8 +80,8 @@ depend on external web services. Always use caution when blocking this many
 addresses.
 
 `asn-to-ipset-script.sh` currently depends on
-[enjen.net/asn-blocklist](https://www.enjen.net/asn-blocklist/readme.php)
-for a list of CIDR for an ASN. `cc-to-ipset-script.sh` currently depends on
+[asn.ipinfo.app](https://asn.ipinfo.app/) for a list of CIDR for an ASN.
+`cc-to-ipset-script.sh` currently depends on
 [IPdeny](https://www.ipdeny.com/ipblocks/) for a list of CIDR for a country.
 `asn-to-ipset-script.sh` and `cc-to-ipset-script.sh` do not depend on
 iptoasn-webservice.

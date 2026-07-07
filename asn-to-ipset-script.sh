@@ -2,7 +2,7 @@
 
 # asn-to-ipset-script.sh
 # Generate scripts to block ASNs with ipset from a list of ASNs.
-# Version 20260705
+# Version 20260706
 #
 # Copyright (C) 2025-2026 Michael McMahon
 #
@@ -20,7 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # This script depends on these projects:
-#   https://www.enjen.net/asn-blocklist/readme.php
+#   https://asn.ipinfo.app/
 #   ipset, iptables, wget, bash, sed, echo, grep, sleep, pwd, cd, mktemp, pwd,
 #   cp, and date
 
@@ -79,7 +79,7 @@ while read -r ASN || [ -n "$ASN" ]; do
   echo "Building $ASN list in $(pwd)"
   # Download the ASN list; skip the ASN on a failed or empty download.
   if ! wget -qO "$ASN-$today.txt" \
-      "https://www.enjen.net/asn-blocklist/index.php?asn=$ASN&type=iplist&api=1" \
+      "https://asn.ipinfo.app/api/download/list/AS$ASN" \
       || [ ! -s "$ASN-$today.txt" ]; then
     echo "WARNING: download failed or empty for AS$ASN; skipping." >&2
     continue
