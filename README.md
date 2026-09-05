@@ -91,4 +91,5 @@ iptoasn-webservice.
 Some bots will intentionally try to rotate through a list of user-agents to try
 to fly under the radar of many other tools. `ua-s-a-d.sh` can be fed a list of
 user-agents and if an IP uses three or more of the user-agents in the list, it
-will ban them with reaction if present.
+will ban them with reaction if present. I have found 1,500+ IPs following this
+pattern within a single run of this script.
