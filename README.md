@@ -22,10 +22,11 @@ this information, you can make informed decisions that might lead to blocking
 individual addresses, blocking ASNs, blocking countries, or writing abuse
 reports.
 
-These scripts pair well with the
+These scripts complement working with the
 [LogReview](https://github.com/TechnologyClassroom/LogReview) project. For
-automated handling, I recommend using
-[reaction with ipset](https://reaction.ppom.me/actions/ipset.html) instead of
+automated handling, I recommend using [reaction](https://reaction.ppom.me/)
+with either [ipset](https://reaction.ppom.me/actions/ipset.html) or
+[nftables sets](https://reaction.ppom.me/examples/actions/nftables/) instead of
 fail2ban.
 
 The FirewallBlockGen scripts live in the
