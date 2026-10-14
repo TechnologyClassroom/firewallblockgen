@@ -4,7 +4,7 @@
 # ua-s-a-d.sh (user-agent search and deny) scans web logs for crawlers
 # masquerading as a collection of desktop user-agents to try to fly under the
 # radar of traditional firewall tools and feed the matching IPs to reaction.
-# Version 20260630
+# Version 20261014
 
 # Copyright (C) 2026 Michael McMahon
 #
@@ -35,7 +35,13 @@
 #   and NGINX.
 # - Currently, this script only works with several hard-coded values.
 # - ua-s-a-d.sh lives in the
-# https://github.com/TechnologyClassroom/firewallblockgen/ repository.
+#   https://github.com/TechnologyClassroom/firewallblockgen/ repository.
+# - After some time, the botnet using this pattern will revert to using less
+#   user-agents. The pattern seems to go from about 8 user-agents for each IP
+#   address and slowly reduces the list down to one user-agent. Once the botnet
+#   is only using one plausable modern browser user-agent, another method must
+#   be used to determine if it is lying. Suricata can be used to fingerprint
+#   TLS with JA3/JA4. Akin can be used to fingerprint request headers.
 
 # How do I use this script?
 # 1. Place a list of user-agents into the `user-agent-list.txt` file in the
