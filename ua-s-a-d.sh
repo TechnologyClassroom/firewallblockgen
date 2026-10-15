@@ -42,13 +42,16 @@
 #   is only using one plausable modern browser user-agent, another method must
 #   be used to determine if it is lying. Suricata can be used to fingerprint
 #   TLS with JA3/JA4. Akin can be used to fingerprint request headers.
+#   Suricata https://suricata.io/ Akin https://github.com/honeylabshq/akin 
 
 # How do I use this script?
 # 1. Place a list of user-agents into the `user-agent-list.txt` file in the
 #    same directory as this script with one user-agent on each line.
 # 2. Make sure that the script is configured to match your environment such as
 #    pointing to your log file location, able to read your log format, and that
-#    your reaction naming is the same.
+#    your reaction naming is the same. There are some examples of modifications
+#    for various log formats in issue 25:
+#    https://github.com/TechnologyClassroom/firewallblockgen/issues/25
 # 3. Run this command to run this script from the command line of a system that
 #    meets the dependencies.
 #      bash ua-s-a-d.sh
@@ -56,12 +59,12 @@
 #    than the default location of the user-agent list.
 #      bash ua-s-a-d.sh user-agent-list.txt
 # 3. If successful, IP addresses that match 3 or more of the lists will be
-#    banned with reaction. Review the behavior of the IP addresses in
-#    `crawlpattern.txt` to check for errors.
+#    banned with reaction if present. Review the behavior of the IP addresses
+#    in `crawlpattern.txt` to check for errors.
 # 4. If everything looks correct, run this script as needed either manually
 #    like so:
 #      while true; do bash ua-s-a-d.sh ; sleep 600 ; date; done
-#    or as a SystemD service.
+#    within tmux or as a SystemD service.
 
 # This script depends on these projects:
 #   ipset, iptables, reaction, bash, sed, echo, grep, cp, cat, rm, awk, date,
@@ -135,6 +138,11 @@ while IFS= read -r ua; do
   #     | awk -F'"' -v ua="$ua" 'NF>=2 && $(NF-1)==ua { split($1,a," "); print a[1] }' \
   #     | sort -u \
   #     > "$out"
+  # If the user-agent is not in the last double-quoted field, change "NF-1" to something else.
+  # If the user-agent is in the second to last double-quoted field, change it to NF-3 instead.
+  # If the IP is in a different field, a[1] can be modified. By default, a[1] uses the first
+  # column. Some configurations use the 2nd column so a[2] would be right. Some configurations
+  # use the 6th column so a[6] would be right.
 done < "$ualist"
 
 touch blocked.txt
@@ -146,6 +154,11 @@ cat ./*-ips.txt \
   | sort -n \
   | awk '{print $2 }' \
   > crawlpattern.txt
+
+# The threshold for how many recurring files is currently represented as awk '$1 > 2' which
+# means 3 or more matches. The pattern will move to 2 or more, so you can change it to
+# '$1 > 1' at that point. Eventually the botnet will use unique user-agents. Do not set this
+# to 1 or more as it will ban real humans. Change methods at that point to Suricata or Akin.
 
 # Dev note: I removed this snippet from below the cat line as the IPs were not
 # permanently blocked by the reaction command and they came back.
